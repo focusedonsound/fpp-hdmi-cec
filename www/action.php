@@ -91,18 +91,48 @@ if ($action === "vcgencmd_test") {
     if (!in_array($cmd, ["on", "off", "status"])) respond(false, "Unknown action: $cmd");
 
     if ($cmd === "status") {
-        // Just report current state from each available method
-        $vcg = shell_exec("vcgencmd display_power 2>/dev/null") ?: "vcgencmd: not available";
-        $tvs = shell_exec("tvservice -s 2>/dev/null") ?: "tvservice: not available";
-        // DRM connector status
-        $drm = [];
-        foreach (glob("/sys/class/drm/card*-HDMI-A-*/status") ?: [] as $f) {
-            $drm[] = basename(dirname($f)) . ": " . trim(@file_get_contents($f) ?: "?");
+        $lines = [];
+
+        // vcgencmd
+        $vcg = shell_exec("vcgencmd display_power 2>&1") ?: "(not available)";
+        $lines[] = "vcgencmd display_power: " . trim($vcg);
+
+        // tvservice
+        $tvs = shell_exec("tvservice -s 2>&1") ?: "(not available)";
+        $lines[] = "tvservice -s: " . trim($tvs);
+
+        // ALL DRM connectors (not just HDMI-A) so we can see what's there
+        $lines[] = "";
+        $lines[] = "=== DRM connectors in /sys/class/drm/ ===";
+        $allDrm = glob("/sys/class/drm/card*-*/status") ?: [];
+        if (empty($allDrm)) {
+            $lines[] = "(none found)";
+        } else {
+            foreach ($allDrm as $f) {
+                $name    = basename(dirname($f));
+                $status  = trim(@file_get_contents($f) ?: "?");
+                $dpmsF   = dirname($f) . "/dpms";
+                $dpms    = file_exists($dpmsF) ? trim(@file_get_contents($dpmsF) ?: "?") : "N/A";
+                $writable = is_writable($dpmsF) ? "writable" : "read-only";
+                $lines[] = "  $name: status=$status  dpms=$dpms ($writable)";
+            }
         }
-        $output = trim("vcgencmd: " . trim($vcg)
-            . "\ntvservice: " . trim($tvs)
-            . "\nDRM: " . (empty($drm) ? "no connectors found" : implode(", ", $drm)));
-        respond(true, "Status checked.", ["output" => $output]);
+
+        // X11 / xrandr
+        $lines[] = "";
+        $lines[] = "=== X11 / xrandr ===";
+        foreach ([":0", ":0.0"] as $d) {
+            $xr = shell_exec("DISPLAY=$d xrandr --query 2>&1 | head -5") ?: "";
+            if ($xr) { $lines[] = "DISPLAY=$d: " . trim($xr); break; }
+        }
+
+        // Kernel / driver info
+        $lines[] = "";
+        $lines[] = "=== Driver info ===";
+        $lines[] = trim(shell_exec("cat /proc/device-tree/model 2>/dev/null || echo 'unknown Pi model'") ?: "");
+        $lines[] = trim(shell_exec("grep -E 'dtoverlay|vc4' /boot/firmware/config.txt /boot/config.txt 2>/dev/null | head -5") ?: "(no vc4 overlay found)");
+
+        respond(true, "Status checked.", ["output" => implode("\n", $lines)]);
     }
 
     // on / off — run display_power.sh and tail the log for results
