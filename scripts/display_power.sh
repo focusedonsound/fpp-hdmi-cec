@@ -89,9 +89,9 @@ fi
 if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
     modprobe i2c-dev 2>/dev/null || true
     if [[ "$ACTION" == "off" ]]; then
-        OUTPUT=$(sudo ddcutil setvcp D6 4 2>&1 || ddcutil setvcp D6 4 2>&1)
+        OUTPUT=$(sudo ddcutil setvcp D6 2 2>&1 || ddcutil setvcp D6 2 2>&1)  # Standby (keeps DDC/CI bus alive)
     else
-        OUTPUT=$(sudo ddcutil setvcp D6 1 2>&1 || ddcutil setvcp D6 1 2>&1)
+        OUTPUT=$(sudo ddcutil setvcp D6 1 2>&1 || ddcutil setvcp D6 1 2>&1)  # On
     fi
     log "Method 3 (ddcutil): $OUTPUT"
     if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* ]]; then
