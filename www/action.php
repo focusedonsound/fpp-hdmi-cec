@@ -1,13 +1,16 @@
 <?php
 // action.php — AJAX endpoint for CEC test commands, device scan, log tail, status check
+ob_start();                         // Buffer any stray output (PHP notices, FPP wrapper)
 ini_set('display_errors', '0');
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
+error_reporting(0);
 
 $PLUGIN_DIR = dirname(__DIR__);
 $LOG_FILE   = "/home/fpp/media/logs/HdmiCec.log";
 
 function respond($ok, $msg, $extra = []) {
+    ob_end_clean();                 // Discard any buffered output before emitting JSON
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
     echo json_encode(array_merge(["status" => $ok ? "OK" : "ERROR", "message" => $msg], $extra));
     exit;
 }
@@ -25,6 +28,21 @@ if ($action === "install_pkg") {
         respond(true,  "cec-utils installed successfully. Reload the page to confirm.", ["output" => $output]);
     } else {
         respond(false, "apt-get ran but cec-client was not found — check output below.", ["output" => $output]);
+    }
+}
+
+// ── Install ddcutil via apt ───────────────────────────────────────────────
+if ($action === "install_ddcutil") {
+    $cmd    = "apt-get install -y --no-install-recommends ddcutil 2>&1";
+    $output = shell_exec("sudo $cmd") ?: shell_exec($cmd) ?: "(no output)";
+    $ok     = !empty(shell_exec("which ddcutil 2>/dev/null"));
+    if ($ok) {
+        // Also ensure i2c-dev is loaded and fpp user is in i2c group
+        shell_exec("modprobe i2c-dev 2>/dev/null");
+        shell_exec("usermod -a -G i2c fpp 2>/dev/null");
+        respond(true,  "ddcutil installed. Reload the page to confirm.", ["output" => $output]);
+    } else {
+        respond(false, "apt-get ran but ddcutil was not found — check output.", ["output" => $output]);
     }
 }
 
@@ -124,6 +142,22 @@ if ($action === "vcgencmd_test") {
         foreach ([":0", ":0.0"] as $d) {
             $xr = shell_exec("DISPLAY=$d xrandr --query 2>&1 | head -5") ?: "";
             if ($xr) { $lines[] = "DISPLAY=$d: " . trim($xr); break; }
+        }
+
+        // DDC/CI via ddcutil
+        $lines[] = "";
+        $lines[] = "=== DDC/CI (ddcutil) ===";
+        $ddcInstalled = !empty(shell_exec("which ddcutil 2>/dev/null"));
+        if ($ddcInstalled) {
+            $ddcVer    = trim(shell_exec("ddcutil --version 2>/dev/null | head -1") ?: "");
+            $lines[]   = "ddcutil: $ddcVer";
+            $i2cLoaded = !empty(shell_exec("lsmod 2>/dev/null | grep i2c_dev"));
+            $lines[]   = "i2c-dev module: " . ($i2cLoaded ? "loaded" : "NOT loaded (run: modprobe i2c-dev)");
+            $ddcDetect = trim(shell_exec("timeout 8 sudo ddcutil detect --brief 2>&1") ?: "(no output)");
+            $lines[]   = "ddcutil detect: " . $ddcDetect;
+        } else {
+            $lines[] = "ddcutil: NOT installed";
+            $lines[] = "Install: sudo apt install ddcutil";
         }
 
         // Kernel / driver info

@@ -27,13 +27,26 @@ mkdir -p /home/fpp/media/logs
 mkdir -p /home/fpp/media/config
 cat "$LOGFILE" >> "$MEDIA_LOG" 2>/dev/null || true
 
-# ── Install cec-utils ────────────────────────────────────────────
-log "Installing cec-utils..."
+# ── Install packages ─────────────────────────────────────────────
+log "Updating package lists..."
 apt-get update -qq >> "$LOGFILE" 2>&1 || true
+
+log "Installing cec-utils..."
 if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
     log "cec-utils installed OK"
 else
-    log "ERROR: apt-get failed — cec-utils could not be installed"
+    log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
+fi
+
+log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
+if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
+    log "ddcutil installed OK"
+    # ddcutil needs i2c-dev kernel module
+    modprobe i2c-dev 2>/dev/null || true
+    # Ensure fpp user is in i2c group for non-root access
+    usermod -a -G i2c fpp 2>/dev/null || true
+else
+    log "WARN: ddcutil install failed (non-fatal — only needed for DDC/CI PC monitors)"
 fi
 
 # Verify installation

@@ -24,7 +24,9 @@ if (file_exists($configFile)) {
 $detectedAdapters = glob('/dev/cec*') ?: [];
 
 // Is cec-utils installed?
-$cecInstalled = !empty(shell_exec('which cec-client 2>/dev/null'));
+$cecInstalled   = !empty(shell_exec('which cec-client 2>/dev/null'));
+// Is ddcutil installed? (needed for PC monitors on KMS/Bookworm)
+$ddcInstalled   = !empty(shell_exec('which ddcutil 2>/dev/null'));
 
 function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 ?>
@@ -184,17 +186,31 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
                          <?php echo ($cfg['display_mode'] ?? 'cec') === 'vcgencmd' ? 'checked' : ''; ?>
                          onchange="cecModeChanged('vcgencmd')" />
                   <label class="form-check-label" for="modeVcgencmd">
-                    <i class="fas fa-fw fa-raspberry-pi"></i> <strong>vcgencmd</strong>
-                    <span class="text-muted small ms-1">— PC monitors &amp; displays without CEC</span>
+                    <i class="fas fa-fw fa-desktop"></i> <strong>vcgencmd / DDC/CI</strong>
+                    <span class="text-muted small ms-1">— PC monitors without CEC (HP, Dell, etc.)</span>
                   </label>
                 </div>
               </div>
               <div id="vcgencmdNote" class="mt-2 small text-muted"
                    style="<?php echo ($cfg['display_mode'] ?? 'cec') !== 'vcgencmd' ? 'display:none;' : ''; ?>">
                 <i class="fas fa-fw fa-circle-info"></i>
-                vcgencmd cuts the HDMI signal from the Pi — most monitors will sleep automatically.
+                <strong>Display On/Off</strong> is controlled via a chain of fallback methods:
+                <em>vcgencmd</em> (Pi legacy driver) →
+                <em>ddcutil DDC/CI</em> (PC monitors over HDMI — recommended for HP, Dell, etc. on Pi OS Bookworm) →
+                <em>DRM sysfs</em> → <em>xrandr</em>.
                 Volume, source switching, and raw CEC commands are not available in this mode.
               </div>
+              <?php if (($cfg['display_mode'] ?? 'cec') === 'vcgencmd' && !$ddcInstalled): ?>
+              <div id="ddcBanner" class="mt-2 p-2 small"
+                   style="background:#fff3cd;border:1px solid #e6a817;border-radius:.3rem;color:#5a3e05;">
+                <i class="fas fa-fw fa-triangle-exclamation"></i>
+                <strong>ddcutil not installed</strong> — DDC/CI monitor control won't work without it.
+                <button type="button" class="cec-btn cec-btn-sm ms-2" id="ddcInstallBtn" onclick="cecInstallDdc()">
+                  <i class="fas fa-fw fa-download"></i> Install ddcutil
+                </button>
+                <span id="ddcInstallStatus" class="ms-2"></span>
+              </div>
+              <?php endif; ?>
             </td>
           </tr>
 
@@ -621,6 +637,31 @@ async function cecVcgencmd(cmd) {
   } catch(e) {
     if (out) out.textContent = 'Error: ' + e;
     cecNotify('Request failed: ' + e, true);
+  }
+}
+
+// ── Install ddcutil from UI ──────────────────────────────────────────────
+async function cecInstallDdc() {
+  const btn    = document.getElementById('ddcInstallBtn');
+  const status = document.getElementById('ddcInstallStatus');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-fw fa-spinner fa-spin"></i> Installing…'; }
+  if (status) status.textContent = '';
+  const fd = new FormData();
+  fd.set('action', 'install_ddcutil');
+  try {
+    const res = await fetch(cecUrl('action.php'), { method:'POST', body:fd, cache:'no-store' });
+    const j   = await res.json();
+    if (j.status === 'OK') {
+      cecNotify('ddcutil installed! Reloading page…', false);
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      cecNotify(j.message, true);
+      if (status) status.textContent = j.message;
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-fw fa-download"></i> Install ddcutil'; }
+    }
+  } catch(e) {
+    cecNotify('Install request failed: ' + e, true);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-fw fa-download"></i> Install ddcutil'; }
   }
 }
 

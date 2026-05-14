@@ -5,8 +5,9 @@
 # Tries multiple methods in order until one works:
 #   1. vcgencmd display_power   (Pi legacy/firmware driver)
 #   2. tvservice                (older Pi OS)
-#   3. DRM sysfs connector      (Pi KMS driver — Bookworm default)
-#   4. xrandr via DISPLAY=:0   (if X11 is running under FPP)
+#   3. ddcutil DDC/CI           (PC monitors via HDMI — HP, Dell, etc.)
+#   4. DRM sysfs connector      (Pi KMS driver — Bookworm default)
+#   5. xrandr via DISPLAY=:0   (if X11 is running under FPP)
 
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
@@ -79,7 +80,25 @@ if [[ "$SUCCESS" == "false" ]] && command -v tvservice >/dev/null 2>&1; then
     fi
 fi
 
-# ── Method 3: DRM/KMS sysfs (Bookworm default driver) ────────────
+# ── Method 3: ddcutil DDC/CI (PC monitors — HP, Dell, etc.) ─────
+# VCP code D6: 1=On  4=Off/Standby  Works with KMS; requires i2c-dev module.
+if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
+    modprobe i2c-dev 2>/dev/null || true
+    if [[ "$ACTION" == "off" ]]; then
+        OUTPUT=$(sudo ddcutil setvcp D6 4 2>&1 || ddcutil setvcp D6 4 2>&1)
+    else
+        OUTPUT=$(sudo ddcutil setvcp D6 1 2>&1 || ddcutil setvcp D6 1 2>&1)
+    fi
+    log "Method 3 (ddcutil): $OUTPUT"
+    if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* ]]; then
+        SUCCESS=true
+        log "Method 3 (ddcutil) succeeded"
+    else
+        log "Method 3 (ddcutil) failed or no DDC/CI monitor found — trying DRM sysfs"
+    fi
+fi
+
+# ── Method 4: DRM/KMS sysfs (Bookworm default driver) ────────────
 if [[ "$SUCCESS" == "false" ]]; then
     DRM_STATUS=$([ "$ACTION" = "on" ] && echo "on" || echo "off")
     # Find HDMI connectors under /sys/class/drm
@@ -87,7 +106,7 @@ if [[ "$SUCCESS" == "false" ]]; then
         if [[ -w "$CONN" ]]; then
             echo "$DRM_STATUS" | sudo tee "$CONN" >/dev/null 2>&1 || \
             echo "$DRM_STATUS" > "$CONN" 2>/dev/null
-            log "Method 3 (DRM sysfs) wrote '$DRM_STATUS' to $CONN"
+            log "Method 4 (DRM sysfs) wrote '$DRM_STATUS' to $CONN"
             SUCCESS=true
         fi
     done
@@ -97,13 +116,13 @@ if [[ "$SUCCESS" == "false" ]]; then
             DPMS_VAL=$([ "$ACTION" = "on" ] && echo "On" || echo "Off")
             echo "$DPMS_VAL" | sudo tee "$DPMS" >/dev/null 2>&1 || \
             echo "$DPMS_VAL" > "$DPMS" 2>/dev/null
-            log "Method 3 (DRM dpms) wrote '$DPMS_VAL' to $DPMS"
+            log "Method 4 (DRM dpms) wrote '$DPMS_VAL' to $DPMS"
             SUCCESS=true
         fi
     done
 fi
 
-# ── Method 4: xrandr (if X11 is running) ────────────────────────
+# ── Method 5: xrandr (if X11 is running) ────────────────────────
 if [[ "$SUCCESS" == "false" ]]; then
     for DISP in ":0" ":0.0"; do
         if DISPLAY="$DISP" xrandr --query >/dev/null 2>&1; then
@@ -116,7 +135,7 @@ if [[ "$SUCCESS" == "false" ]]; then
                 else
                     DISPLAY="$DISP" xrandr --output "$HDMI_OUT" --auto 2>/dev/null
                 fi
-                log "Method 4 (xrandr) ran on $HDMI_OUT via DISPLAY=$DISP"
+                log "Method 5 (xrandr) ran on $HDMI_OUT via DISPLAY=$DISP"
                 SUCCESS=true
                 break
             fi
