@@ -4,6 +4,7 @@ $configFile = "/home/fpp/media/config/hdmi_cec.json";
 function defaultCfg() {
     return [
         "enabled"        => true,
+        "display_mode"   => "cec",
         "adapter"        => "auto",
         "hdmi_port"      => 1,
         "device_address" => 0,
@@ -159,6 +160,44 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
             </td>
           </tr>
 
+          <!-- Display Mode -->
+          <tr>
+            <td style="padding:8px;">
+              <label class="mb-0"><strong>Display Mode</strong></label>
+              <div class="text-muted small">How display power on/off is controlled</div>
+            </td>
+            <td colspan="3" style="padding:8px;">
+              <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="display_mode"
+                         id="modeCec" value="cec"
+                         <?php echo ($cfg['display_mode'] ?? 'cec') === 'cec' ? 'checked' : ''; ?>
+                         onchange="cecModeChanged('cec')" />
+                  <label class="form-check-label" for="modeCec">
+                    <i class="fas fa-fw fa-tv"></i> <strong>HDMI CEC</strong>
+                    <span class="text-muted small ms-1">— Smart TVs &amp; CEC-compatible displays</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="display_mode"
+                         id="modeVcgencmd" value="vcgencmd"
+                         <?php echo ($cfg['display_mode'] ?? 'cec') === 'vcgencmd' ? 'checked' : ''; ?>
+                         onchange="cecModeChanged('vcgencmd')" />
+                  <label class="form-check-label" for="modeVcgencmd">
+                    <i class="fas fa-fw fa-raspberry-pi"></i> <strong>vcgencmd</strong>
+                    <span class="text-muted small ms-1">— PC monitors &amp; displays without CEC</span>
+                  </label>
+                </div>
+              </div>
+              <div id="vcgencmdNote" class="mt-2 small text-muted"
+                   style="<?php echo ($cfg['display_mode'] ?? 'cec') !== 'vcgencmd' ? 'display:none;' : ''; ?>">
+                <i class="fas fa-fw fa-circle-info"></i>
+                vcgencmd cuts the HDMI signal from the Pi — most monitors will sleep automatically.
+                Volume, source switching, and raw CEC commands are not available in this mode.
+              </div>
+            </td>
+          </tr>
+
           <!-- Auto on/off -->
           <tr>
             <td style="padding:8px;">
@@ -184,6 +223,9 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
               </div>
             </td>
           </tr>
+
+          <!-- CEC-only settings (hidden in vcgencmd mode) -->
+          <tbody id="cecOnlyRows" style="<?php echo ($cfg['display_mode'] ?? 'cec') === 'vcgencmd' ? 'display:none;' : ''; ?>">
 
           <!-- Adapter -->
           <tr>
@@ -255,6 +297,8 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
             </td>
           </tr>
 
+          </tbody><!-- end cecOnlyRows -->
+
         </tbody>
       </table>
     </div>
@@ -275,7 +319,32 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <!-- vcgencmd test buttons -->
+          <tr id="vcgencmdTestRow" style="<?php echo ($cfg['display_mode'] ?? 'cec') !== 'vcgencmd' ? 'display:none;' : ''; ?>">
+            <td style="padding:12px;">
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="cec-btn" onclick="cecVcgencmd('on')"
+                        title="vcgencmd display_power 1">
+                  <i class="fas fa-fw fa-power-off"></i> Display On
+                </button>
+                <button type="button" class="cec-btn cec-btn-danger" onclick="cecVcgencmd('off')"
+                        title="vcgencmd display_power 0">
+                  <i class="fas fa-fw fa-moon"></i> Display Off
+                </button>
+                <button type="button" class="cec-btn" onclick="cecVcgencmd('status')"
+                        title="Check current display_power state">
+                  <i class="fas fa-fw fa-circle-question"></i> Check Status
+                </button>
+              </div>
+              <div class="text-muted small mt-2">
+                <i class="fas fa-fw fa-circle-info"></i>
+                Volume, source switching, and raw CEC commands require HDMI CEC mode.
+              </div>
+            </td>
+          </tr>
+
+          <!-- CEC test buttons -->
+          <tr id="cecTestRow" style="<?php echo ($cfg['display_mode'] ?? 'cec') === 'vcgencmd' ? 'display:none;' : ''; ?>">
             <td style="padding:12px;">
               <div class="d-flex flex-wrap gap-2">
                 <button type="button" class="cec-btn" onclick="cecCmd('on')"
@@ -522,6 +591,37 @@ function cecUrl(p) { return CEC_URL + p; }
 
 function cecNotify(msg, isError) {
   $.jGrowl(msg, { themeState: isError ? 'danger' : 'success' });
+}
+
+// ── Display mode toggle ───────────────────────────────────────────────────
+function cecModeChanged(mode) {
+  const isVcg = mode === 'vcgencmd';
+  const cecRows  = document.getElementById('cecOnlyRows');
+  const vcgNote  = document.getElementById('vcgencmdNote');
+  const cecTest  = document.getElementById('cecTestRow');
+  const vcgTest  = document.getElementById('vcgencmdTestRow');
+  if (cecRows) cecRows.style.display  = isVcg ? 'none' : '';
+  if (vcgNote) vcgNote.style.display  = isVcg ? '' : 'none';
+  if (cecTest) cecTest.style.display  = isVcg ? 'none' : '';
+  if (vcgTest) vcgTest.style.display  = isVcg ? '' : 'none';
+}
+
+// ── vcgencmd test ─────────────────────────────────────────────────────────
+async function cecVcgencmd(cmd) {
+  const out = document.getElementById('cecCmdOutput');
+  if (out) { out.style.display = 'block'; out.textContent = 'Running vcgencmd…'; }
+  const fd = new FormData();
+  fd.set('action', 'vcgencmd_test');
+  fd.set('vcmd', cmd);
+  try {
+    const res = await fetch(cecUrl('action.php'), { method:'POST', body:fd, cache:'no-store' });
+    const j   = await res.json();
+    cecNotify(j.message, j.status !== 'OK');
+    if (out) out.textContent = (j.output ? 'Output: ' + j.output + '\n' : '') + (j.log_tail || '');
+  } catch(e) {
+    if (out) out.textContent = 'Error: ' + e;
+    cecNotify('Request failed: ' + e, true);
+  }
 }
 
 // ── Install cec-utils from UI ────────────────────────────────────────────

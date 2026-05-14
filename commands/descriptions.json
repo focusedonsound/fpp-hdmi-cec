@@ -1,43 +1,43 @@
 [
   {
     "name": "CEC - TV On",
-    "description": "Send HDMI CEC power-on command to the TV (CEC address 0).",
+    "description": "Turn the display on. Uses HDMI CEC or vcgencmd depending on the Display Mode setting.",
     "script": "cec_tv_on.sh",
     "args": []
   },
   {
     "name": "CEC - TV Standby",
-    "description": "Send HDMI CEC standby (power off) command to the TV (CEC address 0).",
+    "description": "Turn the display off. Uses HDMI CEC or vcgencmd depending on the Display Mode setting.",
     "script": "cec_tv_standby.sh",
     "args": []
   },
   {
     "name": "CEC - Set Active Source",
-    "description": "Tell the TV to switch its active HDMI input to the Raspberry Pi.",
+    "description": "Tell the TV to switch its active HDMI input to the Raspberry Pi (CEC only).",
     "script": "cec_active_source.sh",
     "args": []
   },
   {
     "name": "CEC - Set Inactive Source",
-    "description": "Tell the TV the Raspberry Pi is no longer the active source.",
+    "description": "Tell the TV the Raspberry Pi is no longer the active source (CEC only).",
     "script": "cec_inactive_source.sh",
     "args": []
   },
   {
     "name": "CEC - Volume Up",
-    "description": "Send HDMI CEC volume up command to the TV or audio system.",
+    "description": "Send HDMI CEC volume up command to the TV or audio system (CEC only).",
     "script": "cec_volume_up.sh",
     "args": []
   },
   {
     "name": "CEC - Volume Down",
-    "description": "Send HDMI CEC volume down command to the TV or audio system.",
+    "description": "Send HDMI CEC volume down command to the TV or audio system (CEC only).",
     "script": "cec_volume_down.sh",
     "args": []
   },
   {
     "name": "CEC - Mute Toggle",
-    "description": "Send HDMI CEC mute/unmute toggle to the TV or audio system.",
+    "description": "Send HDMI CEC mute/unmute toggle to the TV or audio system (CEC only).",
     "script": "cec_mute.sh",
     "args": []
   },
@@ -52,5 +52,17 @@
         "description": "cec-client command string"
       }
     ]
+  },
+  {
+    "name": "vcgencmd - Display On",
+    "description": "Turn on the HDMI display using Raspberry Pi vcgencmd (for PC monitors without CEC).",
+    "script": "vcgencmd_on.sh",
+    "args": []
+  },
+  {
+    "name": "vcgencmd - Display Off",
+    "description": "Turn off the HDMI display using Raspberry Pi vcgencmd (for PC monitors without CEC).",
+    "script": "vcgencmd_off.sh",
+    "args": []
   }
 ]

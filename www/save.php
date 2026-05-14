@@ -25,6 +25,9 @@ $cfg["enabled"]        = isset($_POST["enabled"])        && $_POST["enabled"]   
 $cfg["auto_on_start"]  = isset($_POST["auto_on_start"])  && $_POST["auto_on_start"]  === "1";
 $cfg["auto_off_stop"]  = isset($_POST["auto_off_stop"])  && $_POST["auto_off_stop"]  === "1";
 
+$mode = trim($_POST["display_mode"] ?? "cec");
+$cfg["display_mode"] = in_array($mode, ["cec", "vcgencmd"]) ? $mode : "cec";
+
 $adapter = trim($_POST["adapter"] ?? "auto");
 $cfg["adapter"] = ($adapter !== "") ? $adapter : "auto";
 

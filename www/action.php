@@ -85,6 +85,26 @@ if ($action === "raw") {
     respond(true, "Raw command sent.", ["log_tail" => implode("", $lines)]);
 }
 
+// ── Test vcgencmd ──────────────────────────────────────────────────────────
+if ($action === "vcgencmd_test") {
+    $cmd = trim($_POST["vcmd"] ?? "");
+    $allowed = ["on" => "1", "off" => "0", "status" => ""];
+    if (!isset($allowed[$cmd])) respond(false, "Unknown vcgencmd action: $cmd");
+
+    if (empty(shell_exec("which vcgencmd 2>/dev/null"))) {
+        respond(false, "vcgencmd not found — is this a Raspberry Pi?");
+    }
+
+    if ($cmd === "status") {
+        $output = shell_exec("vcgencmd display_power 2>&1") ?: "(no output)";
+    } else {
+        $output = shell_exec("vcgencmd display_power " . $allowed[$cmd] . " 2>&1") ?: "(no output)";
+    }
+
+    $lines = array_slice(file($LOG_FILE) ?: [], -5);
+    respond(true, "vcgencmd ran.", ["output" => trim($output), "log_tail" => implode("", $lines)]);
+}
+
 // ── Device scan ────────────────────────────────────────────────────────────
 if ($action === "scan") {
     if (empty(shell_exec("which cec-client 2>/dev/null"))) {
@@ -117,6 +137,8 @@ if ($action === "add_presets" || $action === "remove_presets") {
         ["name" => "CEC - Volume Up",           "command" => "CEC - Volume Up",           "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
         ["name" => "CEC - Volume Down",         "command" => "CEC - Volume Down",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
         ["name" => "CEC - Mute Toggle",         "command" => "CEC - Mute Toggle",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "vcgencmd - Display On",     "command" => "vcgencmd - Display On",     "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "vcgencmd - Display Off",    "command" => "vcgencmd - Display Off",    "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
     ];
     $cecNames = array_column($cecPresets, "name");
 
