@@ -331,7 +331,7 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
     </div>
   </div>
 
-  <!-- ── Save button ────────────────────────────────────────────────────── -->
+  <!-- ── Save / action buttons ────────────────────────────────────────── -->
   <div class="d-flex flex-wrap gap-2 mb-3">
     <button type="button" class="cec-btn" onclick="cecSave()">
       <i class="fas fa-fw fa-save"></i> Save Settings
@@ -345,6 +345,59 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
   </div>
 
 </form>
+
+<!-- ── FPP Command Presets ────────────────────────────────────────────── -->
+<div class="fppTableWrapper fppTableWrapperAsTable mb-3">
+  <div class="fppTableContents">
+    <table class="fppSelectableRowTable" style="width:100%;">
+      <thead>
+        <tr>
+          <th colspan="2" style="padding:8px;">
+            <i class="fas fa-fw fa-bookmark"></i> FPP Command Presets
+            <span class="text-muted fw-normal small ms-2">
+              Register CEC commands as FPP presets for use in playlists, schedules &amp; GPIO
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:12px 16px;">
+            <p class="mb-2 small">
+              FPP <strong>Command Presets</strong> are saved shortcuts that appear in the command
+              picker throughout FPP — playlists, the scheduler, GPIO inputs, and more.
+              Click <strong>Register Presets</strong> to add all 7 CEC commands to your FPP preset list.
+            </p>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <button type="button" class="cec-btn" onclick="cecAddPresets()" id="addPresetsBtn">
+                <i class="fas fa-fw fa-bookmark"></i> Register CEC Presets in FPP
+              </button>
+              <button type="button" class="cec-btn cec-btn-sm" style="background-color:#6c757d;border-color:#6c757d;"
+                      onclick="cecRemovePresets()" id="removePresetsBtn">
+                <i class="fas fa-fw fa-trash"></i> Remove Presets
+              </button>
+              <span id="presetStatusBadge" style="font-size:.8rem; color:#aaa;">Checking…</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 16px 12px;">
+            <div class="text-muted small">
+              <strong>Presets added:</strong>
+              CEC - TV On &nbsp;&bull;&nbsp;
+              CEC - TV Standby &nbsp;&bull;&nbsp;
+              CEC - Set Active Source &nbsp;&bull;&nbsp;
+              CEC - Set Inactive Source &nbsp;&bull;&nbsp;
+              CEC - Volume Up &nbsp;&bull;&nbsp;
+              CEC - Volume Down &nbsp;&bull;&nbsp;
+              CEC - Mute Toggle
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- ── Device Scan panel ──────────────────────────────────────────────── -->
 <div class="fppTableWrapper fppTableWrapperAsTable mb-3" id="cecScanPanel" style="display:none;">
@@ -549,4 +602,59 @@ function cecShowLog() {
   cecLoadLog();
   panel.scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
+// ── Command Presets ───────────────────────────────────────────────────────
+async function cecPresetAction(action) {
+  const fd = new FormData();
+  fd.set('action', action);
+  const res = await fetch(cecUrl('action.php'), { method:'POST', body:fd, cache:'no-store' });
+  return res.json();
+}
+
+async function cecAddPresets() {
+  const btn = document.getElementById('addPresetsBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const j = await cecPresetAction('add_presets');
+    cecNotify(j.message, j.status !== 'OK');
+    cecUpdatePresetBadge(j.status === 'OK');
+  } catch(e) {
+    cecNotify('Failed: ' + e, true);
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function cecRemovePresets() {
+  if (!confirm('Remove all CEC command presets from FPP?')) return;
+  const btn = document.getElementById('removePresetsBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const j = await cecPresetAction('remove_presets');
+    cecNotify(j.message, j.status !== 'OK');
+    cecUpdatePresetBadge(false);
+  } catch(e) {
+    cecNotify('Failed: ' + e, true);
+  }
+  if (btn) btn.disabled = false;
+}
+
+function cecUpdatePresetBadge(registered) {
+  const badge = document.getElementById('presetStatusBadge');
+  if (!badge) return;
+  badge.style.color     = registered ? '#198754' : '#aaa';
+  badge.innerHTML = registered
+    ? '<i class="fas fa-fw fa-circle-check"></i> Presets registered in FPP'
+    : '<i class="fas fa-fw fa-circle-xmark"></i> Presets not registered';
+}
+
+// Check preset status on page load
+(async function cecCheckPresets() {
+  try {
+    const res = await fetch(cecUrl('action.php') + '?action=preset_status', { cache:'no-store' });
+    const j   = await res.json();
+    cecUpdatePresetBadge(j.registered === true);
+  } catch(e) {
+    cecUpdatePresetBadge(false);
+  }
+})();
 </script>

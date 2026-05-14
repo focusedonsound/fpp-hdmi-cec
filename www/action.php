@@ -90,4 +90,62 @@ if ($action === "logtail") {
     respond(true, "ok", ["ok" => true, "lines" => $lines]);
 }
 
+// ── Register / remove FPP Command Presets ─────────────────────────────────
+if ($action === "add_presets" || $action === "remove_presets") {
+    $presetsFile = "/home/fpp/media/config/command_presets.json";
+
+    // The full set of CEC presets this plugin manages
+    $cecPresets = [
+        ["name" => "CEC - TV On",              "command" => "CEC - TV On",              "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - TV Standby",          "command" => "CEC - TV Standby",          "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Set Active Source",   "command" => "CEC - Set Active Source",   "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Set Inactive Source", "command" => "CEC - Set Inactive Source", "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Volume Up",           "command" => "CEC - Volume Up",           "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Volume Down",         "command" => "CEC - Volume Down",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Mute Toggle",         "command" => "CEC - Mute Toggle",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+    ];
+    $cecNames = array_column($cecPresets, "name");
+
+    // Load existing presets
+    $existing = [];
+    if (file_exists($presetsFile)) {
+        $j = @json_decode(file_get_contents($presetsFile), true);
+        if (is_array($j)) $existing = $j;
+    }
+
+    if ($action === "add_presets") {
+        // Remove any stale CEC entries, then append fresh ones
+        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $cecNames)));
+        $existing = array_merge($existing, $cecPresets);
+        $msg = count($cecPresets) . " CEC command presets added. They are now available in FPP\'s Command Presets picker.";
+    } else {
+        // remove_presets — strip all CEC entries
+        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $cecNames)));
+        $msg = "CEC command presets removed from FPP.";
+    }
+
+    $dir = dirname($presetsFile);
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+
+    $tmp  = $presetsFile . ".tmp";
+    $data = json_encode(array_values($existing), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+    if (@file_put_contents($tmp, $data) === false) respond(false, "Failed to write presets file.");
+    if (!@rename($tmp, $presetsFile)) { @unlink($tmp); respond(false, "Failed to save presets file."); }
+
+    respond(true, $msg, ["preset_count" => count($existing)]);
+}
+
+// ── Check preset registration status ──────────────────────────────────────
+if ($action === "preset_status") {
+    $presetsFile = "/home/fpp/media/config/command_presets.json";
+    $existing = [];
+    if (file_exists($presetsFile)) {
+        $j = @json_decode(file_get_contents($presetsFile), true);
+        if (is_array($j)) $existing = $j;
+    }
+    $names    = array_column($existing, "name");
+    $registered = in_array("CEC - TV On", $names);
+    respond(true, "ok", ["registered" => $registered, "total_presets" => count($existing)]);
+}
+
 respond(false, "Unknown action: $action");
