@@ -53,18 +53,22 @@ log "Display $ACTION via vcgencmd/fallback methods"
 POWER_VAL=$([ "$ACTION" = "on" ] && echo "1" || echo "0")
 SUCCESS=false
 KMSBLANK_PID_FILE="/tmp/HdmiCec_kmsblank.pid"
+KMSBLANK_FIFO="/tmp/HdmiCec_kmsblank_ctrl"
 
 # ── Pre-step for "on": stop kmsblank if it was used to blank ─────
-# kmsblank blanks by running as a persistent process; killing it restores signal.
+# Send a newline into the control FIFO so kmsblank reads its "press Enter"
+# and exits cleanly, restoring the display. Kill as backup if it lingers.
 if [[ "$ACTION" == "on" ]] && command -v kmsblank >/dev/null 2>&1; then
     SAVED_PID=$(cat "$KMSBLANK_PID_FILE" 2>/dev/null || echo "")
     if [[ -n "$SAVED_PID" ]] && kill -0 "$SAVED_PID" 2>/dev/null; then
-        kill "$SAVED_PID" 2>/dev/null
-        rm -f "$KMSBLANK_PID_FILE"
+        echo "" > "$KMSBLANK_FIFO" 2>/dev/null || true   # graceful: send Enter
+        sleep 0.2
+        kill "$SAVED_PID" 2>/dev/null || true             # forceful backup
+        rm -f "$KMSBLANK_PID_FILE" "$KMSBLANK_FIFO"
         log "Stopped kmsblank (PID $SAVED_PID) — HDMI signal restored"
         SUCCESS=true
     elif pkill -x kmsblank 2>/dev/null; then
-        rm -f "$KMSBLANK_PID_FILE"
+        rm -f "$KMSBLANK_PID_FILE" "$KMSBLANK_FIFO"
         log "Stopped kmsblank (by name) — HDMI signal restored"
         SUCCESS=true
     fi
@@ -107,8 +111,11 @@ fi
 # Kills any stale instance first, then starts fresh and saves the PID.
 if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblank >/dev/null 2>&1; then
     pkill -x kmsblank 2>/dev/null || true
-    # kmsblank needs DRM access — try sudo first, fall back to direct
-    ( sudo kmsblank 2>/tmp/HdmiCec_kmsblank.err || kmsblank 2>/tmp/HdmiCec_kmsblank.err ) &
+    rm -f "$KMSBLANK_FIFO"
+    mkfifo "$KMSBLANK_FIFO"
+    # Open FIFO read-write (<>) so kmsblank doesn't block or get SIGTTIN from the TTY.
+    # kmsblank will wait for a newline on this FIFO instead of the terminal.
+    sudo kmsblank <>"$KMSBLANK_FIFO" 2>/tmp/HdmiCec_kmsblank.err &
     KMSBLANK_PID=$!
     echo "$KMSBLANK_PID" > "$KMSBLANK_PID_FILE"
     sleep 0.5
@@ -116,8 +123,8 @@ if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblan
         SUCCESS=true
         log "Method 3 (kmsblank) started PID $KMSBLANK_PID"
     else
-        KMSBLANK_ERR=$(head -2 /tmp/HdmiCec_kmsblank.err 2>/dev/null || echo "")
-        rm -f "$KMSBLANK_PID_FILE"
+        KMSBLANK_ERR=$(head -1 /tmp/HdmiCec_kmsblank.err 2>/dev/null || echo "")
+        rm -f "$KMSBLANK_PID_FILE" "$KMSBLANK_FIFO"
         log "Method 3 (kmsblank) failed to start${KMSBLANK_ERR:+ — $KMSBLANK_ERR}"
     fi
 fi
