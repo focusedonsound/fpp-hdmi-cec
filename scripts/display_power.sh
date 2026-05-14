@@ -54,13 +54,17 @@ SUCCESS=false
 
 # ── Method 1: vcgencmd display_power ────────────────────────────
 if command -v vcgencmd >/dev/null 2>&1; then
+    BEFORE=$(vcgencmd display_power 2>/dev/null | grep -o '[0-9]' || echo "-1")
     RESULT=$(sudo vcgencmd display_power "$POWER_VAL" 2>&1 || vcgencmd display_power "$POWER_VAL" 2>&1)
     log "vcgencmd result: $RESULT"
-    # Confirm the state actually changed
     CURRENT=$(vcgencmd display_power 2>/dev/null | grep -o '[0-9]' || echo "-1")
-    if [[ "$CURRENT" == "$POWER_VAL" ]]; then
+    if [[ "$CURRENT" == "$POWER_VAL" && "$BEFORE" != "$POWER_VAL" ]]; then
+        # State changed to the desired value — vcgencmd actually worked
         log "Method 1 (vcgencmd) succeeded"
         SUCCESS=true
+    elif [[ "$CURRENT" == "$POWER_VAL" && "$BEFORE" == "$POWER_VAL" ]]; then
+        # State was already what we want — on KMS 'on' reads 1 always; skip to next method
+        log "Method 1 (vcgencmd) state was already $POWER_VAL before command (KMS false positive?) — trying fallbacks"
     else
         log "Method 1 (vcgencmd) ran but state did not change (KMS driver?) — trying fallbacks"
     fi

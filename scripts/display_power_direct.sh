@@ -19,11 +19,14 @@ log "Display $ACTION (direct vcgencmd/fallback)"
 
 # Method 1: vcgencmd
 if command -v vcgencmd >/dev/null 2>&1; then
+    BEFORE=$(vcgencmd display_power 2>/dev/null | grep -o '[0-9]' || echo "-1")
     RESULT=$(sudo vcgencmd display_power "$POWER_VAL" 2>&1 || vcgencmd display_power "$POWER_VAL" 2>&1)
     log "vcgencmd: $RESULT"
     CURRENT=$(vcgencmd display_power 2>/dev/null | grep -o '[0-9]' || echo "-1")
-    if [[ "$CURRENT" == "$POWER_VAL" ]]; then
+    if [[ "$CURRENT" == "$POWER_VAL" && "$BEFORE" != "$POWER_VAL" ]]; then
         SUCCESS=true; log "Method 1 (vcgencmd) succeeded"
+    elif [[ "$CURRENT" == "$POWER_VAL" && "$BEFORE" == "$POWER_VAL" ]]; then
+        log "Method 1 (vcgencmd) state already $POWER_VAL (KMS false positive?) — trying fallbacks"
     fi
 fi
 
