@@ -111,11 +111,20 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 <!-- ── Dependency banner ──────────────────────────────────────────────── -->
 <?php if (!$cecInstalled): ?>
 <div id="cecDepBanner" class="alert mb-3" role="alert">
-  <strong><i class="fas fa-fw fa-triangle-exclamation"></i> cec-utils not installed</strong>
-  <div class="mt-1 small">
-    SSH into your FPP device and run:<br>
-    <code class="user-select-all">sudo apt install cec-utils</code><br>
-    Then reload this page. Alternatively, reinstall this plugin — the install script runs apt automatically.
+  <div class="d-flex justify-content-between align-items-start gap-3">
+    <div>
+      <strong><i class="fas fa-fw fa-triangle-exclamation"></i> cec-utils not installed</strong>
+      <div class="mt-1 small">
+        Click <strong>Install Now</strong> to install automatically, or reinstall this plugin via the Plugin Manager.
+      </div>
+      <div id="cecInstallOutput" style="display:none; margin-top:.5rem;">
+        <pre style="font-size:.75rem; background:#1a1a1a; color:#d0d0d0; padding:8px;
+                    border-radius:4px; max-height:150px; overflow-y:auto; white-space:pre-wrap;"></pre>
+      </div>
+    </div>
+    <button type="button" class="cec-btn flex-shrink-0" id="cecInstallBtn" onclick="cecInstallPkg()">
+      <i class="fas fa-fw fa-download"></i> Install Now
+    </button>
   </div>
 </div>
 <?php endif; ?>
@@ -513,6 +522,35 @@ function cecUrl(p) { return CEC_URL + p; }
 
 function cecNotify(msg, isError) {
   $.jGrowl(msg, { themeState: isError ? 'danger' : 'success' });
+}
+
+// ── Install cec-utils from UI ────────────────────────────────────────────
+async function cecInstallPkg() {
+  const btn     = document.getElementById('cecInstallBtn');
+  const outWrap = document.getElementById('cecInstallOutput');
+  const outPre  = outWrap?.querySelector('pre');
+  if (btn)    { btn.disabled = true; btn.innerHTML = '<i class="fas fa-fw fa-spinner fa-spin"></i> Installing…'; }
+  if (outWrap){ outWrap.style.display = 'block'; }
+  if (outPre) { outPre.textContent = 'Running apt-get install cec-utils…'; }
+
+  const fd = new FormData();
+  fd.set('action', 'install_pkg');
+  try {
+    const res = await fetch(cecUrl('action.php'), { method:'POST', body:fd, cache:'no-store' });
+    const j   = await res.json();
+    if (outPre) outPre.textContent = j.output || j.message;
+    if (j.status === 'OK') {
+      cecNotify('cec-utils installed! Reloading page…', false);
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      cecNotify(j.message, true);
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-fw fa-download"></i> Install Now'; }
+    }
+  } catch(e) {
+    if (outPre) outPre.textContent = 'Request failed: ' + e;
+    cecNotify('Install request failed: ' + e, true);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-fw fa-download"></i> Install Now'; }
+  }
 }
 
 // ── Save ────────────────────────────────────────────────────────────────

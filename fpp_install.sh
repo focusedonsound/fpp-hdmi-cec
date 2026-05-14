@@ -14,6 +14,14 @@ log() {
 
 log "=== HDMI CEC Control install started (user=$(whoami), uid=$(id -u)) ==="
 
+# ── Escalate to root if needed (apt requires root) ───────────────
+# FPP's Plugin Manager runs this as root automatically.
+# When manually cloned and run as the fpp user, re-exec with sudo.
+if [[ "$(id -u)" -ne 0 ]]; then
+    log "Not running as root — re-running with sudo..."
+    exec sudo bash "$0" "$@"
+fi
+
 # ── Create media directories ─────────────────────────────────────
 mkdir -p /home/fpp/media/logs
 mkdir -p /home/fpp/media/config
@@ -21,10 +29,11 @@ cat "$LOGFILE" >> "$MEDIA_LOG" 2>/dev/null || true
 
 # ── Install cec-utils ────────────────────────────────────────────
 log "Installing cec-utils..."
+apt-get update -qq >> "$LOGFILE" 2>&1 || true
 if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
     log "cec-utils installed OK"
 else
-    log "WARN: apt-get failed — cec-utils may not be installed"
+    log "ERROR: apt-get failed — cec-utils could not be installed"
 fi
 
 # Verify installation

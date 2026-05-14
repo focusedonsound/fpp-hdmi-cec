@@ -14,6 +14,20 @@ function respond($ok, $msg, $extra = []) {
 
 $action = trim($_POST["action"] ?? $_GET["action"] ?? "");
 
+// ── Install cec-utils via apt ─────────────────────────────────────────────
+if ($action === "install_pkg") {
+    // FPP's web server runs as root on most builds, so apt works directly.
+    // Fall back to sudo if needed.
+    $cmd    = "apt-get install -y --no-install-recommends cec-utils 2>&1";
+    $output = shell_exec("sudo $cmd") ?: shell_exec($cmd) ?: "(no output)";
+    $ok     = !empty(shell_exec("which cec-client 2>/dev/null"));
+    if ($ok) {
+        respond(true,  "cec-utils installed successfully. Reload the page to confirm.", ["output" => $output]);
+    } else {
+        respond(false, "apt-get ran but cec-client was not found — check output below.", ["output" => $output]);
+    }
+}
+
 // ── Status / dependency check ──────────────────────────────────────────────
 if ($action === "check") {
     $cecInstalled = !empty(shell_exec("which cec-client 2>/dev/null"));
