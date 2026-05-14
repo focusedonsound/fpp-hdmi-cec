@@ -38,6 +38,13 @@ else
     log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
 fi
 
+log "Installing kms++-utils (kmsblank — KMS display blanking for Pi OS Bookworm)..."
+if apt-get install -y --no-install-recommends kms++-utils >> "$LOGFILE" 2>&1; then
+    log "kms++-utils installed OK"
+else
+    log "WARN: kms++-utils install failed (non-fatal — only needed for KMS display blanking)"
+fi
+
 log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
 if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
     log "ddcutil installed OK"

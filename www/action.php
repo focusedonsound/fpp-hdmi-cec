@@ -144,6 +144,19 @@ if ($action === "vcgencmd_test") {
             if ($xr) { $lines[] = "DISPLAY=$d: " . trim($xr); break; }
         }
 
+        // kmsblank (KMS display blanking)
+        $lines[] = "";
+        $lines[] = "=== kmsblank (KMS display blanking) ===";
+        $kmsInstalled = !empty(shell_exec("which kmsblank 2>/dev/null"));
+        if ($kmsInstalled) {
+            $kmsRunning = !empty(shell_exec("pgrep -x kmsblank 2>/dev/null"));
+            $lines[] = "kmsblank: installed";
+            $lines[] = "kmsblank process: " . ($kmsRunning ? "RUNNING (display is blanked)" : "not running");
+        } else {
+            $lines[] = "kmsblank: NOT installed";
+            $lines[] = "Install: sudo apt install kms++-utils";
+        }
+
         // DDC/CI via ddcutil
         $lines[] = "";
         $lines[] = "=== DDC/CI (ddcutil) ===";

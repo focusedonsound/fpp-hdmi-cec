@@ -1,8 +1,8 @@
 #!/bin/bash
-# display_power_direct.sh — always uses vcgencmd/DDC/fallback chain regardless of Display Mode setting
+# display_power_direct.sh — always uses vcgencmd/kmsblank/DDC/fallback chain regardless of Display Mode setting
 # Usage: display_power_direct.sh on|off
 # Used by vcgencmd_on.sh / vcgencmd_off.sh FPP commands.
-# Method order: 1. vcgencmd  2. tvservice  3. ddcutil DDC/CI  4. DRM sysfs  5. xrandr
+# Method order: 1. vcgencmd  2. tvservice  3. kmsblank  4. ddcutil DDC/CI  5. DRM sysfs  6. xrandr
 
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
@@ -14,8 +14,24 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [display] $*" >> "$LOG_FILE"; }
 ACTION="${1:-on}"
 POWER_VAL=$([ "$ACTION" = "on" ] && echo "1" || echo "0")
 SUCCESS=false
+KMSBLANK_PID_FILE="/tmp/HdmiCec_kmsblank.pid"
 
 log "Display $ACTION (direct vcgencmd/fallback)"
+
+# Pre-step for "on": stop kmsblank if running
+if [[ "$ACTION" == "on" ]] && command -v kmsblank >/dev/null 2>&1; then
+    SAVED_PID=$(cat "$KMSBLANK_PID_FILE" 2>/dev/null || echo "")
+    if [[ -n "$SAVED_PID" ]] && kill -0 "$SAVED_PID" 2>/dev/null; then
+        kill "$SAVED_PID" 2>/dev/null
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Stopped kmsblank (PID $SAVED_PID) — HDMI signal restored"
+        SUCCESS=true
+    elif pkill -x kmsblank 2>/dev/null; then
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Stopped kmsblank (by name) — HDMI signal restored"
+        SUCCESS=true
+    fi
+fi
 
 # Method 1: vcgencmd
 if command -v vcgencmd >/dev/null 2>&1; then
@@ -38,7 +54,22 @@ if [[ "$SUCCESS" == "false" ]] && command -v tvservice >/dev/null 2>&1; then
     [[ "$OUTPUT" != *"error"* ]] && { SUCCESS=true; log "Method 2 (tvservice) succeeded"; }
 fi
 
-# Method 3: ddcutil DDC/CI (PC monitors — HP, Dell, etc.)
+# Method 3: kmsblank (Pi OS Bookworm KMS — works on any monitor)
+if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblank >/dev/null 2>&1; then
+    pkill -x kmsblank 2>/dev/null || true
+    kmsblank &
+    KMSBLANK_PID=$!
+    echo "$KMSBLANK_PID" > "$KMSBLANK_PID_FILE"
+    sleep 0.5
+    if kill -0 "$KMSBLANK_PID" 2>/dev/null; then
+        SUCCESS=true; log "Method 3 (kmsblank) started PID $KMSBLANK_PID"
+    else
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Method 3 (kmsblank) failed to start"
+    fi
+fi
+
+# Method 4: ddcutil DDC/CI (PC monitors — HP, Dell, etc.)
 if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
     modprobe i2c-dev 2>/dev/null || true
     if [[ "$ACTION" == "off" ]]; then
@@ -48,30 +79,30 @@ if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
     fi
     log "ddcutil: $OUTPUT"
     if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* ]]; then
-        SUCCESS=true; log "Method 3 (ddcutil) succeeded"
+        SUCCESS=true; log "Method 4 (ddcutil) succeeded"
     fi
 fi
 
-# Method 4: DRM sysfs
+# Method 5: DRM sysfs
 if [[ "$SUCCESS" == "false" ]]; then
     DRM_STATUS=$([ "$ACTION" = "on" ] && echo "on" || echo "off")
     for CONN in /sys/class/drm/card*-HDMI-A-*/status; do
-        [[ -e "$CONN" ]] && { echo "$DRM_STATUS" | sudo tee "$CONN" >/dev/null 2>&1; SUCCESS=true; log "Method 4 (DRM) $CONN"; }
+        [[ -e "$CONN" ]] && { echo "$DRM_STATUS" | sudo tee "$CONN" >/dev/null 2>&1; SUCCESS=true; log "Method 5 (DRM) $CONN"; }
     done
     DPMS_VAL=$([ "$ACTION" = "on" ] && echo "On" || echo "Off")
     for DPMS in /sys/class/drm/card*-HDMI-A-*/dpms; do
-        [[ -e "$DPMS" ]] && { echo "$DPMS_VAL" | sudo tee "$DPMS" >/dev/null 2>&1; SUCCESS=true; log "Method 4 (DRM dpms) $DPMS"; }
+        [[ -e "$DPMS" ]] && { echo "$DPMS_VAL" | sudo tee "$DPMS" >/dev/null 2>&1; SUCCESS=true; log "Method 5 (DRM dpms) $DPMS"; }
     done
 fi
 
-# Method 5: xrandr
+# Method 6: xrandr
 if [[ "$SUCCESS" == "false" ]]; then
     for DISP in ":0" ":0.0"; do
         HDMI_OUT=$(DISPLAY="$DISP" xrandr --query 2>/dev/null | grep " connected" | grep -i hdmi | awk '{print $1}' | head -1)
         if [[ -n "$HDMI_OUT" ]]; then
             [ "$ACTION" = "off" ] && DISPLAY="$DISP" xrandr --output "$HDMI_OUT" --off 2>/dev/null \
                                   || DISPLAY="$DISP" xrandr --output "$HDMI_OUT" --auto 2>/dev/null
-            SUCCESS=true; log "Method 5 (xrandr) $HDMI_OUT"
+            SUCCESS=true; log "Method 6 (xrandr) $HDMI_OUT"
         fi
     done
 fi

@@ -5,9 +5,10 @@
 # Tries multiple methods in order until one works:
 #   1. vcgencmd display_power   (Pi legacy/firmware driver)
 #   2. tvservice                (older Pi OS)
-#   3. ddcutil DDC/CI           (PC monitors via HDMI — HP, Dell, etc.)
-#   4. DRM sysfs connector      (Pi KMS driver — Bookworm default)
-#   5. xrandr via DISPLAY=:0   (if X11 is running under FPP)
+#   3. kmsblank                 (Pi OS Bookworm KMS — any monitor, cuts HDMI signal)
+#   4. ddcutil DDC/CI           (PC monitors via HDMI — HP, Dell, etc.)
+#   5. DRM sysfs connector      (Pi KMS driver — Bookworm default)
+#   6. xrandr via DISPLAY=:0   (if X11 is running under FPP)
 
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
@@ -51,6 +52,23 @@ log "Display $ACTION via vcgencmd/fallback methods"
 
 POWER_VAL=$([ "$ACTION" = "on" ] && echo "1" || echo "0")
 SUCCESS=false
+KMSBLANK_PID_FILE="/tmp/HdmiCec_kmsblank.pid"
+
+# ── Pre-step for "on": stop kmsblank if it was used to blank ─────
+# kmsblank blanks by running as a persistent process; killing it restores signal.
+if [[ "$ACTION" == "on" ]] && command -v kmsblank >/dev/null 2>&1; then
+    SAVED_PID=$(cat "$KMSBLANK_PID_FILE" 2>/dev/null || echo "")
+    if [[ -n "$SAVED_PID" ]] && kill -0 "$SAVED_PID" 2>/dev/null; then
+        kill "$SAVED_PID" 2>/dev/null
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Stopped kmsblank (PID $SAVED_PID) — HDMI signal restored"
+        SUCCESS=true
+    elif pkill -x kmsblank 2>/dev/null; then
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Stopped kmsblank (by name) — HDMI signal restored"
+        SUCCESS=true
+    fi
+fi
 
 # ── Method 1: vcgencmd display_power ────────────────────────────
 if command -v vcgencmd >/dev/null 2>&1; then
@@ -84,8 +102,26 @@ if [[ "$SUCCESS" == "false" ]] && command -v tvservice >/dev/null 2>&1; then
     fi
 fi
 
-# ── Method 3: ddcutil DDC/CI (PC monitors — HP, Dell, etc.) ─────
-# VCP code D6: 1=On  4=Off/Standby  Works with KMS; requires i2c-dev module.
+# ── Method 3: kmsblank (Pi OS Bookworm KMS — works on any monitor) ──
+# Runs as a persistent background process; blanks the HDMI output at KMS level.
+# Kills any stale instance first, then starts fresh and saves the PID.
+if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblank >/dev/null 2>&1; then
+    pkill -x kmsblank 2>/dev/null || true
+    kmsblank &
+    KMSBLANK_PID=$!
+    echo "$KMSBLANK_PID" > "$KMSBLANK_PID_FILE"
+    sleep 0.5
+    if kill -0 "$KMSBLANK_PID" 2>/dev/null; then
+        SUCCESS=true
+        log "Method 3 (kmsblank) started PID $KMSBLANK_PID"
+    else
+        rm -f "$KMSBLANK_PID_FILE"
+        log "Method 3 (kmsblank) failed to start"
+    fi
+fi
+
+# ── Method 4: ddcutil DDC/CI (PC monitors — HP, Dell, etc.) ─────
+# VCP code D6: 1=On  2=Standby (keeps DDC bus alive)  Works with KMS; requires i2c-dev module.
 if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
     modprobe i2c-dev 2>/dev/null || true
     if [[ "$ACTION" == "off" ]]; then
@@ -93,16 +129,16 @@ if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
     else
         OUTPUT=$(sudo ddcutil setvcp D6 1 2>&1 || ddcutil setvcp D6 1 2>&1)  # On
     fi
-    log "Method 3 (ddcutil): $OUTPUT"
+    log "Method 4 (ddcutil): $OUTPUT"
     if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* ]]; then
         SUCCESS=true
-        log "Method 3 (ddcutil) succeeded"
+        log "Method 4 (ddcutil) succeeded"
     else
-        log "Method 3 (ddcutil) failed or no DDC/CI monitor found — trying DRM sysfs"
+        log "Method 4 (ddcutil) failed or no DDC/CI monitor found — trying DRM sysfs"
     fi
 fi
 
-# ── Method 4: DRM/KMS sysfs (Bookworm default driver) ────────────
+# ── Method 5: DRM/KMS sysfs (Bookworm default driver) ────────────
 if [[ "$SUCCESS" == "false" ]]; then
     DRM_STATUS=$([ "$ACTION" = "on" ] && echo "on" || echo "off")
     # Find HDMI connectors under /sys/class/drm
@@ -110,7 +146,7 @@ if [[ "$SUCCESS" == "false" ]]; then
         if [[ -w "$CONN" ]]; then
             echo "$DRM_STATUS" | sudo tee "$CONN" >/dev/null 2>&1 || \
             echo "$DRM_STATUS" > "$CONN" 2>/dev/null
-            log "Method 4 (DRM sysfs) wrote '$DRM_STATUS' to $CONN"
+            log "Method 5 (DRM sysfs) wrote '$DRM_STATUS' to $CONN"
             SUCCESS=true
         fi
     done
@@ -120,13 +156,13 @@ if [[ "$SUCCESS" == "false" ]]; then
             DPMS_VAL=$([ "$ACTION" = "on" ] && echo "On" || echo "Off")
             echo "$DPMS_VAL" | sudo tee "$DPMS" >/dev/null 2>&1 || \
             echo "$DPMS_VAL" > "$DPMS" 2>/dev/null
-            log "Method 4 (DRM dpms) wrote '$DPMS_VAL' to $DPMS"
+            log "Method 5 (DRM dpms) wrote '$DPMS_VAL' to $DPMS"
             SUCCESS=true
         fi
     done
 fi
 
-# ── Method 5: xrandr (if X11 is running) ────────────────────────
+# ── Method 6: xrandr (if X11 is running) ────────────────────────
 if [[ "$SUCCESS" == "false" ]]; then
     for DISP in ":0" ":0.0"; do
         if DISPLAY="$DISP" xrandr --query >/dev/null 2>&1; then
@@ -139,7 +175,7 @@ if [[ "$SUCCESS" == "false" ]]; then
                 else
                     DISPLAY="$DISP" xrandr --output "$HDMI_OUT" --auto 2>/dev/null
                 fi
-                log "Method 5 (xrandr) ran on $HDMI_OUT via DISPLAY=$DISP"
+                log "Method 6 (xrandr) ran on $HDMI_OUT via DISPLAY=$DISP"
                 SUCCESS=true
                 break
             fi

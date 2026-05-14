@@ -209,7 +209,8 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
                 <i class="fas fa-fw fa-circle-info"></i>
                 <strong>Display On/Off</strong> is controlled via a chain of fallback methods:
                 <em>vcgencmd</em> (Pi legacy driver) →
-                <em>ddcutil DDC/CI</em> (PC monitors over HDMI — recommended for HP, Dell, etc. on Pi OS Bookworm) →
+                <em>kmsblank</em> (Pi OS Bookworm KMS — cuts HDMI signal, works on <strong>any</strong> monitor) →
+                <em>ddcutil DDC/CI</em> (additionally puts DDC/CI monitors into standby) →
                 <em>DRM sysfs</em> → <em>xrandr</em>.
                 Volume, source switching, and raw CEC commands are not available in this mode.
               </div>
