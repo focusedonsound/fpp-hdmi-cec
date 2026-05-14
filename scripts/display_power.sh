@@ -107,7 +107,8 @@ fi
 # Kills any stale instance first, then starts fresh and saves the PID.
 if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblank >/dev/null 2>&1; then
     pkill -x kmsblank 2>/dev/null || true
-    kmsblank &
+    # kmsblank needs DRM access — try sudo first, fall back to direct
+    ( sudo kmsblank 2>/tmp/HdmiCec_kmsblank.err || kmsblank 2>/tmp/HdmiCec_kmsblank.err ) &
     KMSBLANK_PID=$!
     echo "$KMSBLANK_PID" > "$KMSBLANK_PID_FILE"
     sleep 0.5
@@ -115,8 +116,9 @@ if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblan
         SUCCESS=true
         log "Method 3 (kmsblank) started PID $KMSBLANK_PID"
     else
+        KMSBLANK_ERR=$(head -2 /tmp/HdmiCec_kmsblank.err 2>/dev/null || echo "")
         rm -f "$KMSBLANK_PID_FILE"
-        log "Method 3 (kmsblank) failed to start"
+        log "Method 3 (kmsblank) failed to start${KMSBLANK_ERR:+ — $KMSBLANK_ERR}"
     fi
 fi
 
@@ -130,11 +132,11 @@ if [[ "$SUCCESS" == "false" ]] && command -v ddcutil >/dev/null 2>&1; then
         OUTPUT=$(sudo ddcutil setvcp D6 1 2>&1 || ddcutil setvcp D6 1 2>&1)  # On
     fi
     log "Method 4 (ddcutil): $OUTPUT"
-    if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* ]]; then
+    if [[ $? -eq 0 && "$OUTPUT" != *"Unable"* && "$OUTPUT" != *"error"* && "$OUTPUT" != *"Error"* && "$OUTPUT" != *"not found"* && "$OUTPUT" != *"No display"* ]]; then
         SUCCESS=true
         log "Method 4 (ddcutil) succeeded"
     else
-        log "Method 4 (ddcutil) failed or no DDC/CI monitor found — trying DRM sysfs"
+        log "Method 4 (ddcutil) failed or no DDC/CI monitor found — trying next method"
     fi
 fi
 
