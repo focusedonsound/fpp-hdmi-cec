@@ -112,7 +112,7 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
     </a>
     <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
        class="cec-btn">
-      <i class="fab fa-fw fa-paypal"></i> Donate via PayPal
+      <i class="fas fa-fw fa-hand-holding-dollar"></i> Donate via PayPal
     </a>
   </div>
 </div>
@@ -640,11 +640,11 @@ Scanning… this takes up to 15 seconds.</pre>
               </a>
               <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
                  class="cec-btn">
-                <i class="fab fa-fw fa-paypal"></i> Donate via PayPal
+                <i class="fas fa-fw fa-hand-holding-dollar"></i> Donate via PayPal
               </a>
               <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank"
                  rel="noopener noreferrer" class="cec-btn" style="background-color:#6c757d; border-color:#6c757d;">
-                <i class="fab fa-fw fa-github"></i> Report an Issue
+                <i class="fas fa-fw fa-bug"></i> Report an Issue
               </a>
             </div>
           </td>
