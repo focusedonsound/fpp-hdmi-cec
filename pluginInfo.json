@@ -1,0 +1,21 @@
+{
+  "repoName": "fpp-hdmi-cec",
+  "name": "HDMI CEC Control",
+  "author": "Nick Scilingo (FocusedOnSound)",
+  "description": "HDMI CEC control for Falcon Player — power your TV on/off, switch inputs, and control volume directly from FPP playlists, schedules, and GPIO triggers. Requires a Raspberry Pi or other device with a CEC-capable HDMI port.",
+  "homeURL": "https://github.com/focusedonsound/fpp-hdmi-cec",
+  "srcURL": "https://github.com/focusedonsound/fpp-hdmi-cec.git",
+  "bugURL": "https://github.com/focusedonsound/fpp-hdmi-cec/issues",
+  "allowUpdates": 1,
+  "versions": [
+    {
+      "minFPPVersion": "6.0",
+      "maxFPPVersion": "0",
+      "branch": "main",
+      "sha": "",
+      "dependencies": {
+        "packages": ["cec-utils"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "CEC - TV On",
+    "description": "Send HDMI CEC power-on command to the TV (CEC address 0).",
+    "script": "cec_tv_on.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - TV Standby",
+    "description": "Send HDMI CEC standby (power off) command to the TV (CEC address 0).",
+    "script": "cec_tv_standby.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Set Active Source",
+    "description": "Tell the TV to switch its active HDMI input to the Raspberry Pi.",
+    "script": "cec_active_source.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Set Inactive Source",
+    "description": "Tell the TV the Raspberry Pi is no longer the active source.",
+    "script": "cec_inactive_source.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Volume Up",
+    "description": "Send HDMI CEC volume up command to the TV or audio system.",
+    "script": "cec_volume_up.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Volume Down",
+    "description": "Send HDMI CEC volume down command to the TV or audio system.",
+    "script": "cec_volume_down.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Mute Toggle",
+    "description": "Send HDMI CEC mute/unmute toggle to the TV or audio system.",
+    "script": "cec_mute.sh",
+    "args": []
+  },
+  {
+    "name": "CEC - Send Raw Command",
+    "description": "Send a raw cec-client command string (e.g. 'on 0', 'standby 5', 'as'). For advanced use.",
+    "script": "cec_raw.sh",
+    "args": [
+      {
+        "type": "string",
+        "name": "Command",
+        "description": "cec-client command string"
+      }
+    ]
+  }
+]

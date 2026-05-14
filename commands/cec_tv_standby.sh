@@ -1,0 +1,4 @@
+#!/bin/bash
+# CEC - TV Standby
+PLUGIN_DIR="$(dirname "$(dirname "$0")")"
+exec "${PLUGIN_DIR}/scripts/cec_command.sh" "standby 0"
