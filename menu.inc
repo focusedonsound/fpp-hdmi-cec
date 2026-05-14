@@ -5,7 +5,7 @@
 
 $menuEntries = Array(
 	Array(
-		'text' => 'HDMI CEC Control',
+		'text' => 'HDMI CEC Control +',
 		'type' => 'content',
 		'page' => 'www/index.php',
 		'wrap' => 1

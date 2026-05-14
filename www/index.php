@@ -92,21 +92,34 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 <!-- ── Page header ─────────────────────────────────────────────────────── -->
 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-  <h2 class="mb-0">
-    <i class="fas fa-fw fa-tv"></i> HDMI CEC Control
-  </h2>
-  <span id="cecStatusPill" style="
-      display:inline-flex; align-items:center; gap:.3rem;
-      padding:.25rem .65rem; border-radius:999px; font-size:.8rem; font-weight:600;
-      background-color:<?php echo $cecInstalled ? '#198754' : '#dc3545'; ?>;
-      color:#fff; white-space:nowrap;">
-    <i class="fas fa-fw fa-circle fa-xs"></i>
-    <span id="cecStatusText"><?php echo $cecInstalled ? 'cec-utils Installed' : 'cec-utils Missing'; ?></span>
-  </span>
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <h2 class="mb-0">
+      <i class="fas fa-fw fa-tv"></i> HDMI CEC Control +
+    </h2>
+    <span id="cecStatusPill" style="
+        display:inline-flex; align-items:center; gap:.3rem;
+        padding:.25rem .65rem; border-radius:999px; font-size:.8rem; font-weight:600;
+        background-color:<?php echo $cecInstalled ? '#198754' : '#dc3545'; ?>;
+        color:#fff; white-space:nowrap;">
+      <i class="fas fa-fw fa-circle fa-xs"></i>
+      <span id="cecStatusText"><?php echo $cecInstalled ? 'cec-utils Installed' : 'cec-utils Missing'; ?></span>
+    </span>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="https://buymeacoffee.com/jm9pwtesct" target="_blank" rel="noopener noreferrer"
+       class="cec-btn">
+      <i class="fas fa-fw fa-mug-hot"></i> Buy Me a Coffee
+    </a>
+    <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
+       class="cec-btn">
+      <i class="fab fa-fw fa-paypal"></i> Donate via PayPal
+    </a>
+  </div>
 </div>
 
 <p class="text-muted mb-3">
   Control your TV or monitor via HDMI CEC — power on/off, input switching, and volume.
+  PC monitors without CEC are supported via DDC/CI (<code>ddcutil</code>).
   Commands can be triggered from FPP <strong>playlists</strong>, <strong>schedules</strong>,
   and <strong>GPIO inputs</strong>.
 </p>
@@ -591,6 +604,49 @@ Scanning… this takes up to 15 seconds.</pre>
               CEC - Volume Up &nbsp;|&nbsp; CEC - Volume Down &nbsp;|&nbsp;
               CEC - Mute Toggle &nbsp;|&nbsp; CEC - Send Raw Command
             </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── About This Plugin ──────────────────────────────────────────────── -->
+<div class="fppTableWrapper fppTableWrapperAsTable mb-3">
+  <div class="fppTableContents">
+    <table class="fppSelectableRowTable" style="width:100%;">
+      <thead>
+        <tr>
+          <th style="padding:8px;">
+            <i class="fas fa-fw fa-heart"></i> About This Plugin
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:12px 16px;">
+            <p class="mb-3">
+              HDMI CEC Control + is free for personal use.
+              If you&rsquo;re using it in a paid display, sponsored event, or
+              professional environment &mdash; please consider
+              <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer">
+                making a donation</a>.
+              It helps keep development going.
+            </p>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <a href="https://buymeacoffee.com/jm9pwtesct" target="_blank" rel="noopener noreferrer"
+                 class="cec-btn">
+                <i class="fas fa-fw fa-mug-hot"></i> Buy Me a Coffee
+              </a>
+              <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
+                 class="cec-btn">
+                <i class="fab fa-fw fa-paypal"></i> Donate via PayPal
+              </a>
+              <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank"
+                 rel="noopener noreferrer" class="cec-btn" style="background-color:#6c757d; border-color:#6c757d;">
+                <i class="fab fa-fw fa-github"></i> Report an Issue
+              </a>
+            </div>
           </td>
         </tr>
       </tbody>
