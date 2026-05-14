@@ -71,7 +71,11 @@ if [[ "$SUCCESS" == "false" ]] && [[ "$ACTION" == "off" ]] && command -v kmsblan
     else
         KMSBLANK_ERR=$(head -1 /tmp/HdmiCec_kmsblank.err 2>/dev/null || echo "")
         rm -f "$KMSBLANK_PID_FILE" "$KMSBLANK_FIFO"
-        log "Method 3 (kmsblank) failed to start${KMSBLANK_ERR:+ — $KMSBLANK_ERR}"
+        if [[ "$KMSBLANK_ERR" == *"-13"* || "$KMSBLANK_ERR" == *"EACCES"* || "$KMSBLANK_ERR" == *"DPMS"* ]]; then
+            log "Method 3 (kmsblank) failed — DRM master conflict: another process (e.g. video player) already holds DRM master. kmsblank needs exclusive KMS access. Use a DDC/CI monitor (ddcutil) instead."
+        else
+            log "Method 3 (kmsblank) failed to start${KMSBLANK_ERR:+ — $KMSBLANK_ERR}"
+        fi
     fi
 fi
 
