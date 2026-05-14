@@ -763,7 +763,7 @@ async function cecLoadLog() {
   const pre = document.getElementById('cecLogOutput');
   if (pre) pre.textContent = 'Loading…';
   try {
-    const res = await fetch(cecUrl('action.php') + '?action=logtail&lines=60', { cache:'no-store' });
+    const res = await fetch(cecUrl('action.php') + '&action=logtail&lines=60', { cache:'no-store' });
     const j   = await res.json();
     if (pre) {
       pre.textContent = (j.lines && j.lines.length) ? j.lines.join('\n') : (j.note || '(log is empty)');
@@ -829,7 +829,7 @@ function cecUpdatePresetBadge(registered) {
 // Check preset status on page load
 (async function cecCheckPresets() {
   try {
-    const res = await fetch(cecUrl('action.php') + '?action=preset_status', { cache:'no-store' });
+    const res = await fetch(cecUrl('action.php') + '&action=preset_status', { cache:'no-store' });
     const j   = await res.json();
     cecUpdatePresetBadge(j.registered === true);
   } catch(e) {
