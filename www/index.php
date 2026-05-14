@@ -332,7 +332,7 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
                   <i class="fas fa-fw fa-moon"></i> Display Off
                 </button>
                 <button type="button" class="cec-btn" onclick="cecVcgencmd('status')"
-                        title="Check current display_power state">
+                        title="Show current display state from all available methods (vcgencmd, tvservice, DRM)">
                   <i class="fas fa-fw fa-circle-question"></i> Check Status
                 </button>
               </div>

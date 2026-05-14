@@ -85,24 +85,42 @@ if ($action === "raw") {
     respond(true, "Raw command sent.", ["log_tail" => implode("", $lines)]);
 }
 
-// ── Test vcgencmd ──────────────────────────────────────────────────────────
+// ── Test vcgencmd / display power ─────────────────────────────────────────
 if ($action === "vcgencmd_test") {
     $cmd = trim($_POST["vcmd"] ?? "");
-    $allowed = ["on" => "1", "off" => "0", "status" => ""];
-    if (!isset($allowed[$cmd])) respond(false, "Unknown vcgencmd action: $cmd");
-
-    if (empty(shell_exec("which vcgencmd 2>/dev/null"))) {
-        respond(false, "vcgencmd not found — is this a Raspberry Pi?");
-    }
+    if (!in_array($cmd, ["on", "off", "status"])) respond(false, "Unknown action: $cmd");
 
     if ($cmd === "status") {
-        $output = shell_exec("vcgencmd display_power 2>&1") ?: "(no output)";
-    } else {
-        $output = shell_exec("vcgencmd display_power " . $allowed[$cmd] . " 2>&1") ?: "(no output)";
+        // Just report current state from each available method
+        $vcg = shell_exec("vcgencmd display_power 2>/dev/null") ?: "vcgencmd: not available";
+        $tvs = shell_exec("tvservice -s 2>/dev/null") ?: "tvservice: not available";
+        // DRM connector status
+        $drm = [];
+        foreach (glob("/sys/class/drm/card*-HDMI-A-*/status") ?: [] as $f) {
+            $drm[] = basename(dirname($f)) . ": " . trim(@file_get_contents($f) ?: "?");
+        }
+        $output = trim("vcgencmd: " . trim($vcg)
+            . "\ntvservice: " . trim($tvs)
+            . "\nDRM: " . (empty($drm) ? "no connectors found" : implode(", ", $drm)));
+        respond(true, "Status checked.", ["output" => $output]);
     }
 
-    $lines = array_slice(file($LOG_FILE) ?: [], -5);
-    respond(true, "vcgencmd ran.", ["output" => trim($output), "log_tail" => implode("", $lines)]);
+    // on / off — run display_power.sh and tail the log for results
+    $script = $PLUGIN_DIR . "/scripts/display_power.sh";
+    if (!file_exists($script)) respond(false, "display_power.sh not found.");
+
+    shell_exec("bash " . escapeshellarg($script) . " " . escapeshellarg($cmd) . " 2>&1");
+
+    // Read last few log lines to show which method was used
+    $lines = array_slice(file($LOG_FILE) ?: [], -8);
+    $logStr = implode("", $lines);
+
+    // Determine success from log
+    $ok = strpos($logStr, "succeeded") !== false || strpos($logStr, "complete") !== false;
+    respond($ok,
+        $ok ? "Display $cmd sent." : "Display $cmd ran but all methods may have failed — check log.",
+        ["log_tail" => $logStr]
+    );
 }
 
 // ── Device scan ────────────────────────────────────────────────────────────
