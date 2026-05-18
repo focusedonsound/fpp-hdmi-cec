@@ -225,17 +225,27 @@ if ($action === "add_presets" || $action === "remove_presets") {
 
     // The full set of CEC presets this plugin manages
     $cecPresets = [
-        ["name" => "CEC - TV On",              "command" => "CEC - TV On",              "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - TV Standby",          "command" => "CEC - TV Standby",          "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - Set Active Source",   "command" => "CEC - Set Active Source",   "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - Set Inactive Source", "command" => "CEC - Set Inactive Source", "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - Volume Up",           "command" => "CEC - Volume Up",           "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - Volume Down",         "command" => "CEC - Volume Down",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "CEC - Mute Toggle",         "command" => "CEC - Mute Toggle",         "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "vcgencmd - Display On",     "command" => "vcgencmd - Display On",     "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
-        ["name" => "vcgencmd - Display Off",    "command" => "vcgencmd - Display Off",    "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - TV On",                   "command" => "CEC - TV On",                   "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - TV Standby",               "command" => "CEC - TV Standby",               "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Set Active Source",        "command" => "CEC - Set Active Source",        "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Set Inactive Source",      "command" => "CEC - Set Inactive Source",      "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Volume Up",                "command" => "CEC - Volume Up",                "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Volume Down",              "command" => "CEC - Volume Down",              "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - Mute Toggle",              "command" => "CEC - Mute Toggle",              "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - vcgencmd Display On",      "command" => "CEC - vcgencmd Display On",      "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
+        ["name" => "CEC - vcgencmd Display Off",     "command" => "CEC - vcgencmd Display Off",     "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
     ];
     $cecNames = array_column($cecPresets, "name");
+
+    // Also remove any presets registered under the old CEC - / vcgencmd - names
+    // so upgrades from older plugin versions don't leave stale entries behind.
+    $legacyNames = [
+        "CEC - TV On", "CEC - TV Standby", "CEC - Set Active Source",
+        "CEC - Set Inactive Source", "CEC - Volume Up", "CEC - Volume Down",
+        "CEC - Mute Toggle", "CEC - Send Raw Command",
+        "vcgencmd - Display On", "vcgencmd - Display Off",
+    ];
+    $allRemoveNames = array_merge($cecNames, $legacyNames);
 
     // Load existing presets
     $existing = [];
@@ -245,14 +255,14 @@ if ($action === "add_presets" || $action === "remove_presets") {
     }
 
     if ($action === "add_presets") {
-        // Remove any stale CEC entries, then append fresh ones
-        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $cecNames)));
+        // Remove any stale HDMI/CEC entries (new and legacy names), then append fresh ones
+        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $allRemoveNames)));
         $existing = array_merge($existing, $cecPresets);
-        $msg = count($cecPresets) . " CEC command presets added. They are now available in FPP\'s Command Presets picker.";
+        $msg = count($cecPresets) . " HDMI command presets added. They are now available in FPP\'s Command Presets picker.";
     } else {
-        // remove_presets — strip all CEC entries
-        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $cecNames)));
-        $msg = "CEC command presets removed from FPP.";
+        // remove_presets — strip all HDMI/CEC entries (new and legacy names)
+        $existing = array_values(array_filter($existing, fn($p) => !in_array($p["name"] ?? "", $allRemoveNames)));
+        $msg = "HDMI command presets removed from FPP.";
     }
 
     $dir = dirname($presetsFile);

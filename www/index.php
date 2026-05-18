@@ -498,7 +498,9 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
               CEC - Set Inactive Source &nbsp;&bull;&nbsp;
               CEC - Volume Up &nbsp;&bull;&nbsp;
               CEC - Volume Down &nbsp;&bull;&nbsp;
-              CEC - Mute Toggle
+              CEC - Mute Toggle &nbsp;&bull;&nbsp;
+              CEC - vcgencmd Display On &nbsp;&bull;&nbsp;
+              CEC - vcgencmd Display Off
             </div>
           </td>
         </tr>
@@ -603,7 +605,8 @@ Scanning… this takes up to 15 seconds.</pre>
               CEC - TV On &nbsp;|&nbsp; CEC - TV Standby &nbsp;|&nbsp;
               CEC - Set Active Source &nbsp;|&nbsp; CEC - Set Inactive Source &nbsp;|&nbsp;
               CEC - Volume Up &nbsp;|&nbsp; CEC - Volume Down &nbsp;|&nbsp;
-              CEC - Mute Toggle &nbsp;|&nbsp; CEC - Send Raw Command
+              CEC - Mute Toggle &nbsp;|&nbsp; CEC - Send Raw Command &nbsp;|&nbsp;
+              CEC - vcgencmd Display On &nbsp;|&nbsp; CEC - vcgencmd Display Off
             </p>
           </td>
         </tr>

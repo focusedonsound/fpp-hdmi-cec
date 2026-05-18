@@ -54,13 +54,13 @@
     ]
   },
   {
-    "name": "vcgencmd - Display On",
+    "name": "CEC - vcgencmd Display On",
     "description": "Turn on the HDMI display using Raspberry Pi vcgencmd (for PC monitors without CEC).",
     "script": "vcgencmd_on.sh",
     "args": []
   },
   {
-    "name": "vcgencmd - Display Off",
+    "name": "CEC - vcgencmd Display Off",
     "description": "Turn off the HDMI display using Raspberry Pi vcgencmd (for PC monitors without CEC).",
     "script": "vcgencmd_off.sh",
     "args": []
