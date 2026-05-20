@@ -2,7 +2,7 @@
 
 ### *FPP Plugin: HDMI CEC Control +*
 
-[![FPP Compatible](https://img.shields.io/badge/FPP-8.x%20%7C%209.x%20%7C%2010.x%2B-red?style=for-the-badge&logo=raspberry-pi)](https://github.com/FalconChristmasLighting/fpp)
+[![FPP Compatible](https://img.shields.io/badge/FPP-9.x%20%7C%2010.x%2B-red?style=for-the-badge&logo=raspberry-pi)](https://github.com/FalconChristmasLighting/fpp)
 [![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi-c51a4a?style=for-the-badge&logo=raspberry-pi)](https://www.raspberrypi.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![HDMI CEC](https://img.shields.io/badge/HDMI-CEC%20%2B%20DDC%2FCI-blue?style=for-the-badge)](https://www.hdmi.org/)
@@ -163,7 +163,7 @@ You can also use **both** — set Display Mode to CEC for the main TV commands, 
 - For DDC/CI: monitor must support DDC/CI (most do — check OSD settings)
 
 ### FPP
-- Falcon Player 8.0, 9.x, or 10.x+
+- Falcon Player 9.x or 10.x+
 
 ---
 
