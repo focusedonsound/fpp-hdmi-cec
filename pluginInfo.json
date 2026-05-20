@@ -9,15 +9,6 @@
   "allowUpdates": 1,
   "versions": [
     {
-      "minFPPVersion": "8.0",
-      "maxFPPVersion": "8.99",
-      "branch": "main",
-      "sha": "",
-      "dependencies": {
-        "packages": ["cec-utils"]
-      }
-    },
-    {
       "minFPPVersion": "9.0",
       "maxFPPVersion": "9.99",
       "branch": "main",
