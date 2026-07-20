@@ -9,7 +9,12 @@ PLUGIN_DIR="$(dirname "$0")"
 # media directory) rather than hard-coding /home/fpp/media/logs, and use
 # FPP's single conformant log file (plugin-<repoName>.log).
 : "${FPPDIR:=/opt/fpp}"
+# common isn't written to be `set -u`-safe (e.g. it references
+# $LD_LIBRARY_PATH with no default, which is unset in some environments) --
+# relax -u just for sourcing it, not for the rest of this script.
+set +u
 . "${FPPDIR}/scripts/common" 2>/dev/null || true
+set -u
 LOGDIR="$(getSetting logDirectory 2>/dev/null || true)"
 LOGDIR="${LOGDIR:-/home/fpp/media/logs}"
 LOGFILE="${LOGDIR}/plugin-fpp-hdmi-cec.log"
