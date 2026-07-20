@@ -17,6 +17,25 @@ function respond($ok, $msg, $extra = []) {
 
 $action = trim($_POST["action"] ?? $_GET["action"] ?? "");
 
+// Go through FPP's own configfile API rather than reading/writing
+// /home/fpp/media/config directly -- that's FPP's shared, not this plugin's.
+function fppApiGetConfigFile($name) {
+    $ctx = stream_context_create(["http" => ["timeout" => 5, "ignore_errors" => true]]);
+    $result = @file_get_contents("http://localhost/api/configfile/$name", false, $ctx);
+    return $result === false ? null : $result;
+}
+function fppApiPostConfigFile($name, $body) {
+    $ctx = stream_context_create(["http" => [
+        "method"  => "POST",
+        "header"  => "Content-Type: text/plain\r\n",
+        "content" => $body,
+        "timeout" => 5,
+        "ignore_errors" => true,
+    ]]);
+    $result = @file_get_contents("http://localhost/api/configfile/$name", false, $ctx);
+    return $result !== false;
+}
+
 // ── Install cec-utils via apt ─────────────────────────────────────────────
 if ($action === "install_pkg") {
     // FPP's web server runs as root on most builds, so apt works directly.
@@ -221,8 +240,6 @@ if ($action === "logtail") {
 
 // ── Register / remove FPP Command Presets ─────────────────────────────────
 if ($action === "add_presets" || $action === "remove_presets") {
-    $presetsFile = "/home/fpp/media/config/command_presets.json";
-
     // The full set of CEC presets this plugin manages
     $cecPresets = [
         ["name" => "CEC - TV On",                   "command" => "CEC - TV On",                   "args" => [], "multisyncCommand" => false, "multisyncHosts" => ""],
@@ -247,10 +264,11 @@ if ($action === "add_presets" || $action === "remove_presets") {
     ];
     $allRemoveNames = array_merge($cecNames, $legacyNames);
 
-    // Load existing presets
+    // Load existing presets via FPP's own API
     $existing = [];
-    if (file_exists($presetsFile)) {
-        $j = @json_decode(file_get_contents($presetsFile), true);
+    $raw = fppApiGetConfigFile("commandPresets.json");
+    if ($raw !== null) {
+        $j = @json_decode($raw, true);
         if (is_array($j)) $existing = $j;
     }
 
@@ -265,23 +283,18 @@ if ($action === "add_presets" || $action === "remove_presets") {
         $msg = "HDMI command presets removed from FPP.";
     }
 
-    $dir = dirname($presetsFile);
-    if (!is_dir($dir)) @mkdir($dir, 0755, true);
-
-    $tmp  = $presetsFile . ".tmp";
     $data = json_encode(array_values($existing), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
-    if (@file_put_contents($tmp, $data) === false) respond(false, "Failed to write presets file.");
-    if (!@rename($tmp, $presetsFile)) { @unlink($tmp); respond(false, "Failed to save presets file."); }
+    if (!fppApiPostConfigFile("commandPresets.json", $data)) respond(false, "Failed to save presets file.");
 
     respond(true, $msg, ["preset_count" => count($existing)]);
 }
 
 // ── Check preset registration status ──────────────────────────────────────
 if ($action === "preset_status") {
-    $presetsFile = "/home/fpp/media/config/command_presets.json";
     $existing = [];
-    if (file_exists($presetsFile)) {
-        $j = @json_decode(file_get_contents($presetsFile), true);
+    $raw = fppApiGetConfigFile("commandPresets.json");
+    if ($raw !== null) {
+        $j = @json_decode($raw, true);
         if (is_array($j)) $existing = $j;
     }
     $names    = array_column($existing, "name");

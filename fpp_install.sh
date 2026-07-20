@@ -14,12 +14,13 @@ log() {
 
 log "=== HDMI CEC Control install started (user=$(whoami), uid=$(id -u)) ==="
 
-# ── Escalate to root if needed (apt requires root) ───────────────
-# FPP's Plugin Manager runs this as root automatically.
-# When manually cloned and run as the fpp user, re-exec with sudo.
+# ── Require root ──────────────────────────────────────────────────
+# FPP's Plugin Manager always runs this as root; install scripts don't
+# need to re-exec themselves through sudo (that hides the assumption
+# rather than stating it). If you're running this by hand, use sudo.
 if [[ "$(id -u)" -ne 0 ]]; then
-    log "Not running as root — re-running with sudo..."
-    exec sudo bash "$0" "$@"
+    log "ERROR: fpp_install.sh must be run as root."
+    exit 1
 fi
 
 # ── Create media directories ─────────────────────────────────────
@@ -31,29 +32,40 @@ cat "$LOGFILE" >> "$MEDIA_LOG" 2>/dev/null || true
 log "Updating package lists..."
 apt-get update -qq >> "$LOGFILE" 2>&1 || true
 
-log "Installing cec-utils..."
-if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
-    log "cec-utils installed OK"
+# pluginInfo.json's dependencies.packages block already declares cec-utils,
+# kms++-utils, and ddcutil, so FPP 10+ installs them before this script runs
+# (FPP_DEPS_RESOLVED=1 is exported in that case). Only install them by hand
+# here as a fallback for FPP 9, which silently ignores the dependencies block.
+if [ -z "${FPP_DEPS_RESOLVED:-}" ]; then
+    log "Installing cec-utils..."
+    if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
+        log "cec-utils installed OK"
+    else
+        log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
+    fi
+
+    log "Installing kms++-utils (kmsblank — KMS display blanking for Pi OS Bookworm)..."
+    if apt-get install -y --no-install-recommends kms++-utils >> "$LOGFILE" 2>&1; then
+        log "kms++-utils installed OK"
+    else
+        log "WARN: kms++-utils install failed (non-fatal — only needed for KMS display blanking)"
+    fi
+
+    log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
+    if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
+        log "ddcutil installed OK"
+    else
+        log "WARN: ddcutil install failed (non-fatal — only needed for DDC/CI PC monitors)"
+    fi
 else
-    log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
+    log "Dependencies already resolved by FPP (FPP_DEPS_RESOLVED=1); skipping manual apt-get."
 fi
 
-log "Installing kms++-utils (kmsblank — KMS display blanking for Pi OS Bookworm)..."
-if apt-get install -y --no-install-recommends kms++-utils >> "$LOGFILE" 2>&1; then
-    log "kms++-utils installed OK"
-else
-    log "WARN: kms++-utils install failed (non-fatal — only needed for KMS display blanking)"
-fi
-
-log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
-if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
-    log "ddcutil installed OK"
+if command -v ddcutil >/dev/null 2>&1; then
     # ddcutil needs i2c-dev kernel module
     modprobe i2c-dev 2>/dev/null || true
     # Ensure fpp user is in i2c group for non-root access
     usermod -a -G i2c fpp 2>/dev/null || true
-else
-    log "WARN: ddcutil install failed (non-fatal — only needed for DDC/CI PC monitors)"
 fi
 
 # Verify installation
