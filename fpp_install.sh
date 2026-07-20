@@ -1,32 +1,40 @@
 #!/bin/bash
+set -euo pipefail
 # fpp_install.sh — HDMI CEC Control plugin installer
 # Called by FPP when the plugin is installed or updated.
 
 PLUGIN_DIR="$(dirname "$0")"
-LOGFILE="/tmp/HdmiCec_install.log"
-MEDIA_LOG="/home/fpp/media/logs/HdmiCec_install.log"
+
+# Resolve FPP's logs directory the documented way (supports a relocated
+# media directory) rather than hard-coding /home/fpp/media/logs, and use
+# FPP's single conformant log file (plugin-<repoName>.log).
+: "${FPPDIR:=/opt/fpp}"
+. "${FPPDIR}/scripts/common" 2>/dev/null || true
+LOGDIR="$(getSetting logDirectory 2>/dev/null || true)"
+LOGDIR="${LOGDIR:-/home/fpp/media/logs}"
+LOGFILE="${LOGDIR}/plugin-fpp-hdmi-cec.log"
 
 log() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
-    echo "$msg" | tee -a "$LOGFILE"
-    echo "$msg" >> "$MEDIA_LOG" 2>/dev/null || true
+    mkdir -p "$LOGDIR" 2>/dev/null || true
+    echo "$msg" >> "$LOGFILE" 2>/dev/null || echo "$msg"
 }
 
 log "=== HDMI CEC Control install started (user=$(whoami), uid=$(id -u)) ==="
 
 # ── Require root ──────────────────────────────────────────────────
 # FPP's Plugin Manager always runs this as root; install scripts don't
-# need to re-exec themselves through sudo (that hides the assumption
-# rather than stating it). If you're running this by hand, use sudo.
+# need to re-exec themselves with elevated privileges (that hides the
+# assumption rather than stating it). If running this by hand, become
+# root first.
 if [[ "$(id -u)" -ne 0 ]]; then
     log "ERROR: fpp_install.sh must be run as root."
     exit 1
 fi
 
 # ── Create media directories ─────────────────────────────────────
-mkdir -p /home/fpp/media/logs
+# (log() already mkdir -p's $LOGDIR on every call)
 mkdir -p /home/fpp/media/config
-cat "$LOGFILE" >> "$MEDIA_LOG" 2>/dev/null || true
 
 # ── Install packages ─────────────────────────────────────────────
 log "Updating package lists..."

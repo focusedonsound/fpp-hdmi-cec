@@ -6,7 +6,7 @@
 # Reads adapter/log-level from /home/fpp/media/config/hdmi_cec.json.
 
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
-LOG_FILE="/home/fpp/media/logs/HdmiCec.log"
+LOG_FILE="/home/fpp/media/logs/plugin-fpp-hdmi-cec.log"
 
 mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
 

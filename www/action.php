@@ -1,11 +1,16 @@
 <?php
 // action.php — AJAX endpoint for CEC test commands, device scan, log tail, status check
 ob_start();                         // Buffer any stray output (PHP notices, FPP wrapper)
+// Keep errors out of the JSON response body (display_errors off), but don't
+// silence them entirely -- log them to the plugin's own log instead, so a
+// fatal error is debuggable instead of a blank response with nothing to go on.
+error_reporting(E_ALL);
 ini_set('display_errors', '0');
-error_reporting(0);
+ini_set('log_errors', '1');
+ini_set('error_log', '/home/fpp/media/logs/plugin-fpp-hdmi-cec.log');
 
 $PLUGIN_DIR = dirname(__DIR__);
-$LOG_FILE   = "/home/fpp/media/logs/HdmiCec.log";
+$LOG_FILE   = "/home/fpp/media/logs/plugin-fpp-hdmi-cec.log";
 
 function respond($ok, $msg, $extra = []) {
     ob_end_clean();                 // Discard any buffered output before emitting JSON

@@ -8,7 +8,7 @@
 
 PLUGIN_DIR="$(dirname "$0")"
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
-LOG_FILE="/home/fpp/media/logs/HdmiCec.log"
+LOG_FILE="/home/fpp/media/logs/plugin-fpp-hdmi-cec.log"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [callbacks] $*" >> "$LOG_FILE"; }
 

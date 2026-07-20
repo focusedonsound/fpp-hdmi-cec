@@ -359,7 +359,7 @@ Display Off/On requested
 | HP, Dell, or most PC monitors | Method 4: ddcutil (verify DDC/CI enabled in monitor OSD) |
 | Older Pi OS | Method 2: tvservice |
 
-Check the log at `/home/fpp/media/logs/HdmiCec.log` to see exactly which method succeeded.
+Check the log at `/home/fpp/media/logs/plugin-fpp-hdmi-cec.log` to see exactly which method succeeded.
 
 ---
 
@@ -557,7 +557,7 @@ ls /dev/cec*
 echo 'scan' | timeout 15 cec-client -s -d 1
 
 # Check the log
-tail -30 /home/fpp/media/logs/HdmiCec.log
+tail -30 /home/fpp/media/logs/plugin-fpp-hdmi-cec.log
 ```
 
 **Common causes:**
@@ -590,7 +590,7 @@ Make sure this feature is **enabled** in your TV's settings menu. It is often di
 ### Display Off doesn't work (PC monitor)
 
 1. Run the **Display Status** test from the settings page — it shows all methods and their state
-2. Check the log: `tail -30 /home/fpp/media/logs/HdmiCec.log`
+2. Check the log: `tail -30 /home/fpp/media/logs/plugin-fpp-hdmi-cec.log`
 3. Look for which method was tried and why each failed
 
 **kmsblank fails with "DRM master conflict":**
@@ -617,7 +617,7 @@ The **Enabled** toggle in settings is off. Go to HDMI CEC Control settings and e
 ### Auto On doesn't fire on boot
 
 - Verify **Auto On at Start** is checked in settings
-- Check the log: `grep "auto_on_start" /home/fpp/media/logs/HdmiCec.log`
+- Check the log: `grep "auto_on_start" /home/fpp/media/logs/plugin-fpp-hdmi-cec.log`
 - The command fires 15 seconds after `pluginStart` — check if FPP boot logs show `pluginStart` for this plugin
 - If the TV CEC scan shows the TV at address 0 but on a non-standard port, try setting `hdmi_port` in settings
 
@@ -665,7 +665,7 @@ sudo ddcutil detect
 | `www/save.php` | Config save endpoint |
 | `www/action.php` | AJAX endpoint — test commands, scan, log tail, preset management, status |
 | `/home/fpp/media/config/hdmi_cec.json` | Runtime config |
-| `/home/fpp/media/logs/HdmiCec.log` | Full command / method / error log |
+| `/home/fpp/media/logs/plugin-fpp-hdmi-cec.log` | Full command / method / error log |
 | `/home/fpp/media/config/command_presets.json` | FPP command presets (shared with FPP) |
 
 ---

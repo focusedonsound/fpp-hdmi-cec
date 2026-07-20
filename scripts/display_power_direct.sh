@@ -6,7 +6,7 @@
 
 PLUGIN_DIR="$(dirname "$(dirname "$0")")"
 CONFIG_FILE="/home/fpp/media/config/hdmi_cec.json"
-LOG_FILE="/home/fpp/media/logs/HdmiCec.log"
+LOG_FILE="/home/fpp/media/logs/plugin-fpp-hdmi-cec.log"
 
 mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [display] $*" >> "$LOG_FILE"; }
