@@ -40,8 +40,8 @@ mkdir -p /home/fpp/media/config
 log "Updating package lists..."
 apt-get update -qq >> "$LOGFILE" 2>&1 || true
 
-# pluginInfo.json's dependencies.packages block already declares cec-utils,
-# kms++-utils, and ddcutil, so FPP 10+ installs them before this script runs
+# pluginInfo.json's dependencies.packages block declares cec-utils and
+# ddcutil, so FPP 10+ installs them before this script runs
 # (FPP_DEPS_RESOLVED=1 is exported in that case). Only install them by hand
 # here as a fallback for FPP 9, which silently ignores the dependencies block.
 if [ -z "${FPP_DEPS_RESOLVED:-}" ]; then
@@ -52,13 +52,6 @@ if [ -z "${FPP_DEPS_RESOLVED:-}" ]; then
         log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
     fi
 
-    log "Installing kms++-utils (kmsblank — KMS display blanking for Pi OS Bookworm)..."
-    if apt-get install -y --no-install-recommends kms++-utils >> "$LOGFILE" 2>&1; then
-        log "kms++-utils installed OK"
-    else
-        log "WARN: kms++-utils install failed (non-fatal — only needed for KMS display blanking)"
-    fi
-
     log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
     if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
         log "ddcutil installed OK"
@@ -67,6 +60,19 @@ if [ -z "${FPP_DEPS_RESOLVED:-}" ]; then
     fi
 else
     log "Dependencies already resolved by FPP (FPP_DEPS_RESOLVED=1); skipping manual apt-get."
+fi
+
+# kms++-utils (kmsblank -- KMS display blanking) is Raspberry Pi OS-specific
+# and doesn't exist as a package on generic Debian/Ubuntu at all, so it's
+# deliberately NOT in pluginInfo.json's dependencies -- declaring it there
+# makes FPP treat it as a hard requirement and abort the whole plugin install
+# on any non-Pi-OS platform where it's unavailable. Always attempt it here
+# instead, best-effort, so its absence only disables KMS blanking specifically.
+log "Installing kms++-utils (kmsblank — KMS display blanking for Pi OS Bookworm)..."
+if apt-get install -y --no-install-recommends kms++-utils >> "$LOGFILE" 2>&1; then
+    log "kms++-utils installed OK"
+else
+    log "WARN: kms++-utils not available on this platform (non-fatal — only needed for KMS display blanking on Pi OS Bookworm)"
 fi
 
 if command -v ddcutil >/dev/null 2>&1; then

@@ -14,7 +14,7 @@
       "branch": "main",
       "sha": "",
       "dependencies": {
-        "packages": ["cec-utils", "kms++-utils", "ddcutil"]
+        "packages": ["cec-utils", "ddcutil"]
       }
     },
     {
@@ -23,7 +23,7 @@
       "branch": "main",
       "sha": "",
       "dependencies": {
-        "packages": ["cec-utils", "kms++-utils", "ddcutil"]
+        "packages": ["cec-utils", "ddcutil"]
       }
     }
   ]
