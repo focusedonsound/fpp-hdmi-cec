@@ -6,6 +6,7 @@
   "homeURL": "https://github.com/focusedonsound/fpp-hdmi-cec",
   "srcURL": "https://github.com/focusedonsound/fpp-hdmi-cec.git",
   "bugURL": "https://github.com/focusedonsound/fpp-hdmi-cec/issues",
+  "iconURL": "https://raw.githubusercontent.com/focusedonsound/fpp-hdmi-cec/main/icon.png",
   "allowUpdates": 1,
   "versions": [
     {
