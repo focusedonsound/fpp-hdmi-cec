@@ -626,9 +626,11 @@ Scanning… this takes up to 15 seconds.</pre>
         <tr>
           <td style="padding:12px 16px;">
             <p class="mb-3">
-              HDMI CEC Control + is free and open source. See the
-              <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer">
-                GitHub repo</a> for documentation, updates, and ways to support development.
+              HDMI CEC Control + is free for personal and hobbyist use. Commercial or
+              paid-event use requires a separate license — contact
+              <a href="mailto:license.request@christmasinboontontwp.com">license.request@christmasinboontontwp.com</a>.
+              See the <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer">
+                GitHub repo</a> for documentation and updates.
             </p>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank"
