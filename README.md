@@ -38,6 +38,24 @@
 
 ---
 
+## 📜 License
+
+Free for personal, hobbyist, and noncommercial use under the
+[PolyForm Noncommercial License 1.0.0](LICENSE).
+
+Using this in a commercial or paid-event display? A separate commercial
+license is required — contact license.request@christmasinboontontwp.com
+to arrange one.
+
+---
+
+## 💛 Support the Project
+
+If HDMI CEC Control+ has simplified your show setup, this repo has a Sponsor
+button in the sidebar if you'd like to support development.
+
+---
+
 ## 📺 What Is HDMI CEC Control+?
 
 **HDMI CEC Control+** is a Falcon Player plugin that gives FPP full control over the display connected to your Raspberry Pi's HDMI port — powering it on, putting it to sleep, switching inputs, and adjusting volume, all from inside FPP's playlist and scheduling system.
@@ -695,13 +713,6 @@ A: Yes — set Display Mode to CEC, and use the dedicated `vcgencmd - Display On
 
 ---
 
-## 💛 Support the Project
-
-If HDMI CEC Control+ has simplified your show setup, this repo has a Sponsor
-button in the sidebar if you'd like to support development.
-
----
-
 ## 🤝 Contributing
 
 Found a bug? TV brand that needs special handling? New fallback method idea? PRs and issues welcome!
@@ -712,17 +723,6 @@ Found a bug? TV brand that needs special handling? New fallback method idea? PRs
 4. Open a pull request against `main`
 
 Bug reports: [github.com/focusedonsound/fpp-hdmi-cec/issues](https://github.com/focusedonsound/fpp-hdmi-cec/issues)
-
----
-
-## 📜 License
-
-Free for personal, hobbyist, and noncommercial use under the
-[PolyForm Noncommercial License 1.0.0](LICENSE).
-
-Using this in a commercial or paid-event display? A separate commercial
-license is required — contact license.request@christmasinboontontwp.com
-to arrange one.
 
 ---
 
