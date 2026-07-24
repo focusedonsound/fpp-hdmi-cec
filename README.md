@@ -697,15 +697,8 @@ A: Yes — set Display Mode to CEC, and use the dedicated `vcgencmd - Display On
 
 ## 💛 Support the Project
 
-If HDMI CEC Control+ has simplified your show setup, consider supporting development!
-
-<a href="https://buymeacoffee.com/jm9pwtesct" target="_blank">
-  <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge" alt="Buy Me a Coffee" />
-</a>
-&nbsp;
-<a href="https://paypal.me/NScilingo" target="_blank">
-  <img src="https://img.shields.io/badge/Donate-PayPal-blue?style=for-the-badge&logo=paypal" alt="Donate via PayPal" />
-</a>
+If HDMI CEC Control+ has simplified your show setup, this repo has a Sponsor
+button in the sidebar if you'd like to support development.
 
 ---
 

@@ -106,13 +106,9 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
     </span>
   </div>
   <div class="d-flex align-items-center gap-2">
-    <a href="https://buymeacoffee.com/jm9pwtesct" target="_blank" rel="noopener noreferrer"
+    <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer"
        class="cec-btn">
-      <i class="fas fa-fw fa-mug-hot"></i> Buy Me a Coffee
-    </a>
-    <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
-       class="cec-btn">
-      <i class="fas fa-fw fa-hand-holding-dollar"></i> Donate via PayPal
+      <i class="fas fa-fw fa-code-branch"></i> GitHub Repo
     </a>
   </div>
 </div>
@@ -630,22 +626,11 @@ Scanning… this takes up to 15 seconds.</pre>
         <tr>
           <td style="padding:12px 16px;">
             <p class="mb-3">
-              HDMI CEC Control + is free for personal use.
-              If you&rsquo;re using it in a paid display, sponsored event, or
-              professional environment &mdash; please consider
-              <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer">
-                making a donation</a>.
-              It helps keep development going.
+              HDMI CEC Control + is free and open source. See the
+              <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer">
+                GitHub repo</a> for documentation, updates, and ways to support development.
             </p>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <a href="https://buymeacoffee.com/jm9pwtesct" target="_blank" rel="noopener noreferrer"
-                 class="cec-btn">
-                <i class="fas fa-fw fa-mug-hot"></i> Buy Me a Coffee
-              </a>
-              <a href="https://paypal.me/NScilingo" target="_blank" rel="noopener noreferrer"
-                 class="cec-btn">
-                <i class="fas fa-fw fa-hand-holding-dollar"></i> Donate via PayPal
-              </a>
               <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank"
                  rel="noopener noreferrer" class="cec-btn" style="background-color:#6c757d; border-color:#6c757d;">
                 <i class="fas fa-fw fa-bug"></i> Report an Issue
