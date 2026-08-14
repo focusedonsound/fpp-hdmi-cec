@@ -118,6 +118,10 @@ if ($action === "command") {
 if ($action === "raw") {
     $raw = trim($_POST["raw_cmd"] ?? "");
     if ($raw === "") respond(false, "No command specified.");
+    // Allow only characters valid in CEC protocol commands: hex digits, letters,
+    // spaces, colons, dots, and hyphens. Rejects shell metacharacters.
+    if (!preg_match('/^[A-Za-z0-9 :.\-]+$/', $raw))
+        respond(false, "Invalid characters in CEC command.");
 
     $script = $PLUGIN_DIR . "/scripts/cec_command.sh";
     if (!file_exists($script)) respond(false, "Core script not found.");

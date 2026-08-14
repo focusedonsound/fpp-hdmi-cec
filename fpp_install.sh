@@ -118,5 +118,7 @@ if [[ ! -f "$CONFIG" ]]; then
 JSONEOF
 fi
 
+setSetting restartFlag 1 2>/dev/null || true
+
 log "=== HDMI CEC Control install complete ==="
 exit 0

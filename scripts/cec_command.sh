@@ -60,9 +60,9 @@ except: print(1)
 log "Sending: ${COMMAND}"
 
 if [[ -n "$ADAPTER" ]]; then
-    OUTPUT=$(timeout 10 bash -c "echo '${COMMAND}' | cec-client -s -d ${LOG_LEVEL} '${ADAPTER}'" 2>&1)
+    OUTPUT=$(timeout 10 bash -c 'echo "$1" | cec-client -s -d "$2" "$3"' -- "$COMMAND" "$LOG_LEVEL" "$ADAPTER" 2>&1)
 else
-    OUTPUT=$(timeout 10 bash -c "echo '${COMMAND}' | cec-client -s -d ${LOG_LEVEL}" 2>&1)
+    OUTPUT=$(timeout 10 bash -c 'echo "$1" | cec-client -s -d "$2"' -- "$COMMAND" "$LOG_LEVEL" 2>&1)
 fi
 STATUS=$?
 

@@ -12,5 +12,11 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
 
+: "${FPPDIR:=/opt/fpp}"
+set +u
+. "${FPPDIR}/scripts/common" 2>/dev/null || true
+set -u
+setSetting restartFlag 1 2>/dev/null || true
+
 log "=== HDMI CEC Control uninstall: nothing outside the plugin directory to remove ==="
 exit 0
