@@ -75,6 +75,14 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
   background-color: #842029;
   border-color: #6a1a20;
 }
+.cec-btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+.cec-btn-secondary:hover, .cec-btn-secondary:focus {
+  background-color: #5c636a;
+  border-color: #565e64;
+}
 #cecDepBanner {
   background-color: #fff3cd !important;
   border: 1px solid #e6a817 !important;
@@ -109,6 +117,10 @@ function e($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
     <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer"
        class="cec-btn">
       <i class="fas fa-fw fa-code-branch"></i> GitHub Repo
+    </a>
+    <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank" rel="noopener noreferrer"
+       class="cec-btn cec-btn-secondary">
+      <i class="fas fa-fw fa-bug"></i> Report an Issue
     </a>
   </div>
 </div>
@@ -630,14 +642,9 @@ Scanning… this takes up to 15 seconds.</pre>
               paid-event use requires a separate license — contact
               <a href="mailto:license.request@christmasinboontontwp.com">license.request@christmasinboontontwp.com</a>.
               See the <a href="https://github.com/focusedonsound/fpp-hdmi-cec" target="_blank" rel="noopener noreferrer">
-                GitHub repo</a> for documentation and updates.
+                GitHub repo</a> for documentation and updates, or use the
+              <strong>Report an Issue</strong> button above to open a ticket.
             </p>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <a href="https://github.com/focusedonsound/fpp-hdmi-cec/issues" target="_blank"
-                 rel="noopener noreferrer" class="cec-btn" style="background-color:#6c757d; border-color:#6c757d;">
-                <i class="fas fa-fw fa-bug"></i> Report an Issue
-              </a>
-            </div>
           </td>
         </tr>
       </tbody>
