@@ -46,25 +46,22 @@ log "Updating package lists..."
 apt-get update -qq >> "$LOGFILE" 2>&1 || true
 
 # pluginInfo.json's dependencies.packages block declares cec-utils and
-# ddcutil, so FPP 10+ installs them before this script runs
-# (FPP_DEPS_RESOLVED=1 is exported in that case). Only install them by hand
-# here as a fallback for FPP 9, which silently ignores the dependencies block.
-if [ -z "${FPP_DEPS_RESOLVED:-}" ]; then
-    log "Installing cec-utils..."
-    if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
-        log "cec-utils installed OK"
-    else
-        log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
-    fi
-
-    log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
-    if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
-        log "ddcutil installed OK"
-    else
-        log "WARN: ddcutil install failed (non-fatal — only needed for DDC/CI PC monitors)"
-    fi
+# ddcutil, but FPP 9 silently ignores that block entirely, so it's not
+# enough on its own. Always install here by hand so both FPP 9 and FPP 10
+# end up with the packages regardless of whether the JSON block was
+# honored (re-installing an already-installed package via apt is a no-op).
+log "Installing cec-utils..."
+if apt-get install -y --no-install-recommends cec-utils >> "$LOGFILE" 2>&1; then
+    log "cec-utils installed OK"
 else
-    log "Dependencies already resolved by FPP (FPP_DEPS_RESOLVED=1); skipping manual apt-get."
+    log "WARN: cec-utils install failed (non-fatal — only needed for HDMI CEC TVs)"
+fi
+
+log "Installing ddcutil (DDC/CI monitor control for PC monitors)..."
+if apt-get install -y --no-install-recommends ddcutil >> "$LOGFILE" 2>&1; then
+    log "ddcutil installed OK"
+else
+    log "WARN: ddcutil install failed (non-fatal — only needed for DDC/CI PC monitors)"
 fi
 
 # kms++-utils (kmsblank -- KMS display blanking) is Raspberry Pi OS-specific
