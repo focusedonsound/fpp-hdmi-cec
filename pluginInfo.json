@@ -8,6 +8,19 @@
   "bugURL": "https://github.com/focusedonsound/fpp-hdmi-cec/issues",
   "iconURL": "https://raw.githubusercontent.com/focusedonsound/fpp-hdmi-cec/main/icon.png",
   "allowUpdates": 1,
+  "privacy": {
+    "summary": "Controls your TV/monitor over the local HDMI-CEC or DDC/CI bus. Makes no outbound network calls, collects no data about people, and has no sensors.",
+    "sends": [],
+    "collects": [],
+    "sensors": [],
+    "remoteAccess": "none",
+    "systemChanges": [
+      { "kind": "privilege", "what": "adds fpp to the i2c group and loads the i2c-dev kernel module, for DDC/CI monitor access" },
+      { "kind": "privilege", "what": "runs vcgencmd/tvservice/kmsblank/ddcutil via sudo, relying on FPP's existing sudo config (no sudoers file added)" }
+    ],
+    "closedCode": false,
+    "other": "none"
+  },
   "versions": [
     {
       "minFPPVersion": "9.0",
