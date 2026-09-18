@@ -135,10 +135,10 @@ show_easter_egg() {
         "fpp-AnnouncementAssistant|one-tap announcements ducked over your show audio"
     )
     local jokes=(
-        "Why did the TV go to therapy? Too many issues with the remote control."
-        "I told my TV a joke about HDMI cables... it didn't get the connection."
-        "My remote control and I have a great relationship. We really click."
-        "Why don't TVs ever get lost? They always know their input."
+        "I told my TV to turn itself off. It said, 'That's not my input.'"
+        "Why don't TVs ever get invited to parties? Too much drama on every channel."
+        "My remote and I are inseparable. We're always on the same channel."
+        "Why did the HDMI cable break up with the VGA cable? It needed someone more high-definition."
     )
 
     local candidates=()
@@ -149,19 +149,20 @@ show_easter_egg() {
     done
 
     echo
-    echo "  🏆 ┌─────────────────────────────────────────────────┐"
-    echo "     │   ACHIEVEMENT UNLOCKED: 📺 fpp-hdmi-cec            │"
-    echo "     └─────────────────────────────────────────────────┘"
-    echo "  ${jokes[$((RANDOM % ${#jokes[@]}))]}"
+    echo "🏆 ACHIEVEMENT UNLOCKED"
+    echo "════════════════════════════════════════"
+    echo "📺  fpp-hdmi-cec installed / updated"
+    echo
+    echo "  \"${jokes[$((RANDOM % ${#jokes[@]}))]}\""
     echo
     if [ ${#candidates[@]} -gt 0 ]; then
         entry="${candidates[$((RANDOM % ${#candidates[@]}))]}"
         repo="${entry%%|*}"
         blurb="${entry#*|}"
-        echo "  🎁 Haven't tried ${repo} yet? ${blurb}"
-        echo "     https://github.com/focusedonsound/${repo}"
+        echo "🎁 Haven't tried ${repo} yet? ${blurb}"
+        echo "   https://github.com/focusedonsound/${repo}"
     else
-        echo "  🎉 Looks like you've got the whole FocusedOnSound collection installed already!"
+        echo "🎉 Looks like you've got the whole FocusedOnSound collection installed already!"
     fi
     echo
 }
