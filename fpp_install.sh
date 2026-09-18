@@ -119,9 +119,61 @@ setSetting restartFlag 1 2>/dev/null || true
 
 log "=== HDMI CEC Control install complete ==="
 
+# cowsay-style speech bubble that word-wraps to fit whatever text it's
+# given, rather than a fixed-width box hand-tuned per joke. Never mix a
+# literal backslash into a printf FORMAT string here -- pass it as %s data
+# instead (see the bs='\' variable below); a backslash sitting next to \n
+# in a format string is ambiguous across shells and silently prints "\n"
+# literally instead of a newline on at least one of them.
+render_speech_bubble() {
+    local text="$1" maxwidth=44 bs='\'
+    local -a lines=()
+    local line=""
+    for word in $text; do
+        if [ -z "$line" ]; then
+            line="$word"
+        elif [ $((${#line} + 1 + ${#word})) -le "$maxwidth" ]; then
+            line="$line $word"
+        else
+            lines+=("$line")
+            line="$word"
+        fi
+    done
+    [ -n "$line" ] && lines+=("$line")
+
+    local width=0 l
+    for l in "${lines[@]}"; do
+        [ ${#l} -gt "$width" ] && width=${#l}
+    done
+
+    local top bot padded n=${#lines[@]}
+    top=$(printf '%*s' "$((width + 2))" '' | tr ' ' '_')
+    bot=$(printf '%*s' "$((width + 2))" '' | tr ' ' '-')
+    printf '%s\n' " ${top}"
+    if [ "$n" -eq 1 ]; then
+        padded=$(printf '%-*s' "$width" "${lines[0]}")
+        printf '%s\n' "< ${padded} >"
+    else
+        local i
+        for i in "${!lines[@]}"; do
+            padded=$(printf '%-*s' "$width" "${lines[$i]}")
+            if [ "$i" -eq 0 ]; then
+                printf '%s\n' "/ ${padded} ${bs}"
+            elif [ "$i" -eq $((n - 1)) ]; then
+                printf '%s\n' "${bs} ${padded} /"
+            else
+                printf '%s\n' "| ${padded} |"
+            fi
+        done
+    fi
+    printf '%s\n' " ${bot}"
+}
+
 # A little something for whoever's actually reading the install log. Only
 # ever recommends a sibling plugin that isn't already sitting right next to
-# this one, so it never suggests something you've clearly already got.
+# this one, so it never suggests something you've clearly already got. A
+# 1-in-7 roll swaps the everyday joke pool for a separate "rare drop" pool
+# with its own art framing, instead of just re-skinning the same box.
 show_easter_egg() {
     local plugin_dir_abs
     plugin_dir_abs="$(cd "$PLUGIN_DIR" && pwd)"
@@ -140,6 +192,11 @@ show_easter_egg() {
         "My remote ran away from home. Police say it's a clear case of button abandonment."
         "Why is the TV always so calm? It's got great remote control."
     )
+    local rare_jokes=(
+        "Legend says one CEC install in seven secretly dreams of controlling the neighbor's TV too."
+        "Rare stat unlocked: this remote's batteries will outlive us all."
+        "You've found the one HDMI cable that's never once come loose. Cherish it."
+    )
 
     local candidates=()
     local entry repo blurb
@@ -148,29 +205,66 @@ show_easter_egg() {
         [ -d "${plugins_root}/${repo}" ] || candidates+=("$entry")
     done
 
+    local wordmark mascot
+    wordmark=$(cat <<'WORDMARK'
+ ####  #####   ####
+#      #      #
+#      ####   #
+#      #      #
+ ####  #####   ####
+WORDMARK
+)
+    mascot=$(cat <<'MASCOT'
+        \   /
+         \ /
+      .-'''''-.
+     /  ~~~~~~~\
+    |  ~~~~~~~~ |
+     \_________/
+        |   |
+       _|___|_
+MASCOT
+)
+
+    local is_rare=0
+    [ $((RANDOM % 7)) -eq 0 ] && is_rare=1
+
     echo
-    echo "══════════════════════════════════════════"
-    echo "   🏆  A C H I E V E M E N T   U N L O C K E D"
-    echo "══════════════════════════════════════════"
+    echo "$wordmark"
     echo
-    echo "  📺  fpp-hdmi-cec — installed & ready to roll"
+    if [ "$is_rare" -eq 1 ]; then
+        echo "  *** RARE DROP (1-in-7) — fpp-hdmi-cec ***"
+        echo
+        render_speech_bubble "${rare_jokes[$((RANDOM % ${#rare_jokes[@]}))]}"
+    else
+        echo "  🏆 ACHIEVEMENT UNLOCKED — fpp-hdmi-cec installed & ready to roll"
+        echo
+        render_speech_bubble "${jokes[$((RANDOM % ${#jokes[@]}))]}"
+    fi
+    echo "$mascot"
     echo
-    echo "  \"${jokes[$((RANDOM % ${#jokes[@]}))]}\""
-    echo
-    echo "  ⭐⭐⭐⭐⭐  (dad-joke rating, self-awarded)"
-    echo
-    echo "──────────────────────────────────────────"
+
+    if [ "$is_rare" -eq 0 ]; then
+        local stars=$((3 + RANDOM % 3)) s rating=""
+        for ((s = 0; s < 5; s++)); do
+            if [ "$s" -lt "$stars" ]; then rating="${rating}★"; else rating="${rating}☆"; fi
+        done
+        echo "  dad-joke rating: ${rating}  (${stars}/5 groans)"
+        echo
+    fi
+
+    echo "  ----------------------------------------"
     if [ ${#candidates[@]} -gt 0 ]; then
         entry="${candidates[$((RANDOM % ${#candidates[@]}))]}"
         repo="${entry%%|*}"
         blurb="${entry#*|}"
-        echo "  🎁  NEXT UP: ${repo}"
-        echo "      ${blurb}"
-        echo "      → https://github.com/focusedonsound/${repo}"
+        echo "  🎁 NEXT UP: ${repo}"
+        echo "     ${blurb}"
+        echo "     https://github.com/focusedonsound/${repo}"
     else
-        echo "  🎉  FULL COLLECTION UNLOCKED — every FocusedOnSound plugin, right here."
+        echo "  🎉 FULL COLLECTION UNLOCKED — every FocusedOnSound plugin, right here."
     fi
-    echo "──────────────────────────────────────────"
+    echo "  ----------------------------------------"
     echo
 }
 show_easter_egg
