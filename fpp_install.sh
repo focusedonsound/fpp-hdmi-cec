@@ -118,4 +118,53 @@ fi
 setSetting restartFlag 1 2>/dev/null || true
 
 log "=== HDMI CEC Control install complete ==="
+
+# A little something for whoever's actually reading the install log. Only
+# ever recommends a sibling plugin that isn't already sitting right next to
+# this one, so it never suggests something you've clearly already got.
+show_easter_egg() {
+    local plugin_dir_abs
+    plugin_dir_abs="$(cd "$PLUGIN_DIR" && pwd)"
+    local plugins_root
+    plugins_root="$(dirname "$plugin_dir_abs")"
+
+    local siblings=(
+        "fpp-tally|counts cars and crowd size passing your show"
+        "fpp-EncoreRadio|keeps the radio-station vibe going after the show ends"
+        "fpp-sled-mailbox|a smart Letters-to-Santa mailbox with visitor detection"
+        "fpp-AnnouncementAssistant|one-tap announcements ducked over your show audio"
+    )
+    local jokes=(
+        "Why did the TV go to therapy? Too many issues with the remote control."
+        "I told my TV a joke about HDMI cables... it didn't get the connection."
+        "My remote control and I have a great relationship. We really click."
+        "Why don't TVs ever get lost? They always know their input."
+    )
+
+    local candidates=()
+    local entry repo blurb
+    for entry in "${siblings[@]}"; do
+        repo="${entry%%|*}"
+        [ -d "${plugins_root}/${repo}" ] || candidates+=("$entry")
+    done
+
+    echo
+    echo "  🏆 ┌─────────────────────────────────────────────────┐"
+    echo "     │   ACHIEVEMENT UNLOCKED: 📺 fpp-hdmi-cec            │"
+    echo "     └─────────────────────────────────────────────────┘"
+    echo "  ${jokes[$((RANDOM % ${#jokes[@]}))]}"
+    echo
+    if [ ${#candidates[@]} -gt 0 ]; then
+        entry="${candidates[$((RANDOM % ${#candidates[@]}))]}"
+        repo="${entry%%|*}"
+        blurb="${entry#*|}"
+        echo "  🎁 Haven't tried ${repo} yet? ${blurb}"
+        echo "     https://github.com/focusedonsound/${repo}"
+    else
+        echo "  🎉 Looks like you've got the whole FocusedOnSound collection installed already!"
+    fi
+    echo
+}
+show_easter_egg
+
 exit 0
