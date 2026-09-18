@@ -60,11 +60,13 @@ button in the sidebar if you'd like to support development.
 
 **HDMI CEC Control+** is a Falcon Player plugin that gives FPP full control over the display connected to your Raspberry Pi's HDMI port — powering it on, putting it to sleep, switching inputs, and adjusting volume, all from inside FPP's playlist and scheduling system.
 
-For **CEC-capable TVs**, it uses the HDMI CEC bus — the same protocol your TV remote uses behind the scenes — to send commands directly over the HDMI cable without any extra wiring.
+For **CEC-capable TVs and projectors**, it uses the HDMI CEC bus — the same protocol your remote uses behind the scenes — to send commands directly over the HDMI cable already running to your display, without any extra wiring. Most modern projectors (and practically all modern TVs) support CEC over HDMI, so this covers a lot more setups than you'd expect.
 
 For **PC monitors** (HP, Dell, Samsung, LG, and most monitors without CEC), it uses a smart **6-method fallback chain** that tries `vcgencmd`, `kmsblank`, `ddcutil` (DDC/CI), DRM sysfs, and more until something works on your specific hardware.
 
 The result: your display turns on when the show starts, turns off when the show ends, and you never have to touch it again all season. 🎄
+
+**Projector users:** if you've looked at [FPP-Plugin-Projector-Control](https://github.com/FalconChristmas/FPP-Plugin-Projector-Control) and don't have a spare RS-232 serial port or a PJLink network connection wired up to your projector, this plugin is likely the easier path — CEC rides over the same HDMI cable that's already carrying your show's video, so there's nothing extra to run. The tradeoff: it relies on your projector actually supporting HDMI-CEC (check its manual/settings menu — the feature is sometimes called "HDMI Link," "Anynet+," "Bravia Sync," etc. depending on brand), and it doesn't speak PJLink or RS-232, so it won't help with lamp-hour reporting or other PJLink-specific projector features.
 
 ---
 
