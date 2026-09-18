@@ -135,10 +135,10 @@ show_easter_egg() {
         "fpp-AnnouncementAssistant|one-tap announcements ducked over your show audio"
     )
     local jokes=(
-        "I told my TV to turn itself off. It said, 'That's not my input.'"
-        "Why don't TVs ever get invited to parties? Too much drama on every channel."
-        "My remote and I are inseparable. We're always on the same channel."
-        "Why did the HDMI cable break up with the VGA cable? It needed someone more high-definition."
+        "Why did the TV break up with the remote? It said their relationship had too many buttons to push."
+        "I told my television a joke about lag. It's still buffering."
+        "My remote ran away from home. Police say it's a clear case of button abandonment."
+        "Why is the TV always so calm? It's got great remote control."
     )
 
     local candidates=()
@@ -149,21 +149,28 @@ show_easter_egg() {
     done
 
     echo
-    echo "🏆 ACHIEVEMENT UNLOCKED"
-    echo "════════════════════════════════════════"
-    echo "📺  fpp-hdmi-cec installed / updated"
+    echo "══════════════════════════════════════════"
+    echo "   🏆  A C H I E V E M E N T   U N L O C K E D"
+    echo "══════════════════════════════════════════"
+    echo
+    echo "  📺  fpp-hdmi-cec — installed & ready to roll"
     echo
     echo "  \"${jokes[$((RANDOM % ${#jokes[@]}))]}\""
     echo
+    echo "  ⭐⭐⭐⭐⭐  (dad-joke rating, self-awarded)"
+    echo
+    echo "──────────────────────────────────────────"
     if [ ${#candidates[@]} -gt 0 ]; then
         entry="${candidates[$((RANDOM % ${#candidates[@]}))]}"
         repo="${entry%%|*}"
         blurb="${entry#*|}"
-        echo "🎁 Haven't tried ${repo} yet? ${blurb}"
-        echo "   https://github.com/focusedonsound/${repo}"
+        echo "  🎁  NEXT UP: ${repo}"
+        echo "      ${blurb}"
+        echo "      → https://github.com/focusedonsound/${repo}"
     else
-        echo "🎉 Looks like you've got the whole FocusedOnSound collection installed already!"
+        echo "  🎉  FULL COLLECTION UNLOCKED — every FocusedOnSound plugin, right here."
     fi
+    echo "──────────────────────────────────────────"
     echo
 }
 show_easter_egg
