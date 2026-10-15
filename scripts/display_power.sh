@@ -43,8 +43,20 @@ fi
 
 # ── CEC mode — delegate entirely ────────────────────────────────
 if [[ "$MODE" != "vcgencmd" ]]; then
-    CEC_CMD=$([ "$ACTION" = "on" ] && echo "on 0" || echo "standby 0")
-    exec "${PLUGIN_DIR}/scripts/cec_command.sh" "$CEC_CMD"
+    if [[ "$ACTION" == "on" ]]; then
+        # Wake the display, then claim Active Source. A bare "on 0" (CEC
+        # Image View On) is enough for many TVs, but a lot of projectors
+        # (e.g. ViewSonic LS-series) ignore it from standby and only wake on
+        # the Active Source broadcast that "as" sends -- which also routes
+        # the display back to the Pi's input. So send both: "on 0" for the
+        # displays that honor it, then "as" for the ones that need it.
+        # "on 0" is best-effort (|| true) so a display that NACKs it doesn't
+        # abort before we get to "as".
+        "${PLUGIN_DIR}/scripts/cec_command.sh" "on 0" || true
+        exec "${PLUGIN_DIR}/scripts/cec_command.sh" "as"
+    else
+        exec "${PLUGIN_DIR}/scripts/cec_command.sh" "standby 0"
+    fi
 fi
 
 # ── vcgencmd mode — try multiple Pi display-off methods ─────────
